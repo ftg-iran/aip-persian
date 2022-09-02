@@ -105,22 +105,21 @@ The drawbacks of threading have been mentioned in a few other places already, bu
 <p style='text-align: justify'>None of this information is new, and the problems with threading as a programming model are not platform-specific either. For example, this is what the <a href='http://bit.ly/2Fr3eXK'>Microsoft Visual C++</a> documentation says about threading:
 </p>
 
-```
-    The central concurrency mechanism in the Windows API is the thread. You typically use the CreateThread function to create threads. Although threads are relatively easy to create and use, the operating system allocates a significant amount of time and other resources to manage them. Additionally, although each thread is guaranteed to receive the same execution time as any other thread at the same priority level, the associated overhead requires that you create sufficiently large tasks. For smaller or more finegrained tasks, the overhead that is associated with concurrency can outweigh the benefit of running the tasks in parallel.
-```
+
+>The central concurrency mechanism in the Windows API is the thread. You typically use the CreateThread function to create threads. Although threads are relatively easy to create and use, the operating system allocates a significant amount of time and other resources to manage them. Additionally, although each thread is guaranteed to receive the same execution time as any other thread at the same priority level, the associated overhead requires that you create sufficiently large tasks. For smaller or more finegrained tasks, the overhead that is associated with concurrency can outweigh the benefit of running the tasks in parallel.
 
 <p style='text-align: justify'>But—I hear you protest—this is <i>Windows</i>, right? Surely a Unix system doesn’t have these problems? Here follows a similar recommendation from the Mac Developer Library’s <a href='https://oreil.ly/W3mBM'>Threading Programming Guide</a>:
 </p>
 
-```
-    Threading has a real cost to your program (and the system) in terms of memory use and performance. Each thread requires the allocation of memory in both the kernel memory space and your program’s memory space. The core structures needed to manage your thread and coordinate its scheduling are stored in the kernel using wired memory. Your thread’s stack space and per-thread data is stored in your program’s memory space. Most of these structures are created and initialized when you first create the thread—a process that can be relatively expensive because of the required interactions with the kernel.
-```
+
+>Threading has a real cost to your program (and the system) in terms of memory use and performance. Each thread requires the allocation of memory in both the kernel memory space and your program’s memory space. The core structures needed to manage your thread and coordinate its scheduling are stored in the kernel using wired memory. Your thread’s stack space and per-thread data is stored in your program’s memory space. Most of these structures are created and initialized when you first create the thread—a process that can be relatively expensive because of the required interactions with the kernel.
+
 
 <p style='text-align: justify'>They go even further in the <a href='https://oreil.ly/fcGNL'>Concurrency Programming Guide</a> (emphasis mine):</p>
 
-```
-    In the past, introducing concurrency to an application required the creation of one or more additional threads. Unfortunately, writing threaded code is challenging. Threads are a low-level tool that must be managed manually. Given that the optimal number of threads for an application can change dynamically based on the current system load and the underlying hardware, implementing a correct threading solution becomes extremely difficult, if not impossible to achieve. In addition, the synchronization mechanisms typically used with threads add complexity and risk to software designs without any guarantees of improved performance.
-```
+
+>In the past, introducing concurrency to an application required the creation of one or more additional threads. Unfortunately, writing threaded code is challenging. Threads are a low-level tool that must be managed manually. Given that the optimal number of threads for an application can change dynamically based on the current system load and the underlying hardware, implementing a correct threading solution becomes extremely difficult, if not impossible to achieve. In addition, the synchronization mechanisms typically used with threads add complexity and risk to software designs without any guarantees of improved performance.
+
 
 These themes repeat throughout:
 - Threading makes code hard to reason about.
