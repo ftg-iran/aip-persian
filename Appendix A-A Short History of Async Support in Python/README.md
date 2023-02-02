@@ -10,7 +10,7 @@ party libraries. These often provide satisfactory solutions, but there is a lack
 ibility between these libraries, which tends to make codebases very tightly coupled to
 the library they use.
 
-> - Laurens van Houtven, PEP 3153 (May 2011): Asynchronous IO Support
+> - Laurens van Houtven, [PEP 3153 (May 2011): Asynchronous IO Support](https://oreil.ly/pNyro)
 
 The goal of this appendix is to describe a little of the history behind async program‐
 ming in Python, and the point I want to make—which still amazes me when I think
@@ -28,11 +28,11 @@ portable, more featureful, simpler, more scalable, better maintained, better doc
 mented, and it can make a delicious omelette. Asyncore is, for all intents and purposes,
 obsolete.
 
-> —Glyph ca. 2010 on Stack Overflow
+> —Glyph ca. 2010 on [Stack Overflow](https://oreil.ly/4pEeJ)
 
 asyncore should really be considered a historical artifact and never actually used.
 
-> —Jean-Paul Calderone ca. 2013 on Stack Overflow
+> —Jean-Paul Calderone ca. 2013 on [Stack Overflow](https://oreil.ly/oWGEZ)
 
 Support for so-called asynchronous features was added to Python a long time ago, in
 the asyncore module. As you can tell from the preceding quotes, reception of asyn
@@ -48,7 +48,7 @@ asyncore.py in the CPython source:
 # Copyright 1996 by Sam Rushing
 ```
 
-Furthermore, the first paragraph of the Python documentation for asyncore says the
+Furthermore, the first paragraph of the Python [documentation for asyncore](https://oreil.ly/tPp8_) says the
 following, which could easily appear in today’s documentation for asyncio:
 
 > This module provides the basic infrastructure for writing asynchronous socket service
@@ -81,23 +81,23 @@ nents, and it’s interesting to consider when they were added:
 
 *Language syntax: generators*
 
-> Keyword yield, added in Python 2.2 (2001) in PEP 255 and enhanced in Python
-2.5 (2005) in PEP 342 with the send() and throw() methods on generator
+> Keyword yield, added in Python 2.2 (2001) in [PEP 255](https://oreil.ly/35Czp) and enhanced in Python
+2.5 (2005) in [PEP 342](https://oreil.ly/UDWl) with the send() and throw() methods on generator
 objects, which allowed generators to be used as coroutines for the first time.
-Keyword yield from, added in Python 3.3 (2009) in PEP 380 to make it much
+Keyword yield from, added in Python 3.3 (2009) in [PEP 380](https://oreil.ly/38jVG) to make it much
 easier to work with nested yields of generators, particularly in the case where gen‐
 erators are being used as makeshift (i.e., temporary) coroutines.
 
 *Language syntax: coroutines*
 
-> Keywords async and await, added in Python 3.5 (2015) in PEP 492, which gave
+> Keywords async and await, added in Python 3.5 (2015) in [PEP 492](https://oreil.ly/XJUmS), which gave
 first-class support to coroutines as a language feature in their own right. This also
 means that generators can again be used as generators, even inside coroutine
 functions.
 
 *Library module: asyncio*
 
-> Added in Python 3.4 (2012) in PEP 3156, providing batteries-included support
+> Added in Python 3.4 (2012) in [PEP 3156](https://oreil.ly/QKG4m), providing batteries-included support
 for both framework designers and end-user developers to work with coroutines
 and perform network I/O. Crucially, the design of the event loop in asyncio was
 intended to provide a common base upon which other existing third-party
