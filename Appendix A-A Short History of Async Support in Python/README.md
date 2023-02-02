@@ -61,7 +61,55 @@ practical if your program is largely I/O bound. If your program is processor bou
 then preemptive scheduled threads are probably what you really need. Network servers
 are rarely processor bound, however.
 
+​1996, huh? Clearly it was already possible to manage multiple socket events in a single
+thread in Python back then (and, in fact, much earlier than this in other languages).
+So what has changed in the past quarter-century that makes Asyncio special now?
+The answer is language syntax. We’re going to be looking at this more closely in the
+next section, but before closing out this window into the past, it’s worth noting a
+small detail that appeared in the Python 3.6 docs for asyncore (ca. December 2016):
 
+> Source code: Lib/asyncore.py
+Deprecated since version 3.6: Please use asyncio instead.
+
+## The Path to Native Coroutines
+
+Recall that I’m using the term Asyncio to refer to both the Python language syntax
+changes, and the new asyncio module in the standard library.1 Let’s dig into that dis‐
+tinction a little more.
+Today, support for asynchronous programming in Python has three distinct compo‐
+nents, and it’s interesting to consider when they were added:
+
+*Language syntax: generators*
+
+> Keyword yield, added in Python 2.2 (2001) in PEP 255 and enhanced in Python
+2.5 (2005) in PEP 342 with the send() and throw() methods on generator
+objects, which allowed generators to be used as coroutines for the first time.
+Keyword yield from, added in Python 3.3 (2009) in PEP 380 to make it much
+easier to work with nested yields of generators, particularly in the case where gen‐
+erators are being used as makeshift (i.e., temporary) coroutines.
+
+*Language syntax: coroutines*
+
+> Keywords async and await, added in Python 3.5 (2015) in PEP 492, which gave
+first-class support to coroutines as a language feature in their own right. This also
+means that generators can again be used as generators, even inside coroutine
+functions.
+
+*Library module: asyncio*
+
+> Added in Python 3.4 (2012) in PEP 3156, providing batteries-included support
+for both framework designers and end-user developers to work with coroutines
+and perform network I/O. Crucially, the design of the event loop in asyncio was
+intended to provide a common base upon which other existing third-party
+frameworks like Tornado and Twisted could standardize.
+
+These three are quite distinct from each other, although you could be forgiven confu‐
+sion since the history of the development of these features in Python has been diffi‐
+cult to follow.
+The impact of new syntax for async and await is significant, and it’s having an effect
+on other programming languages too, like JavaScript, C#, Scala, Kotlin, and Dart.
+It took a long time and a lot of thinking by the thousands of programmers involved in
+the Python project to get us to this point.
 
 
 
