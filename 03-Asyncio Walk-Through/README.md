@@ -2122,3 +2122,23 @@ shut down cleanly. I expect that a future version of Python will allow the
 asyncio.run() function to wait (internally) for executor jobs to finish, but I hope
 that the discussion in this section is still useful for you to develop your thinking
 around clean shutdown handling.
+
+[^1]: When they become available! At the time of writing, the only available references for Asyncio were the API specification in the official Python documentation and a collection of blog posts, several of which have been linked to in this book.
+
+[^2]:The asyncio API lets you do lots of wild things with multiple loop instances and threads, but this is not the right book to get into that. 99% of the time you’re going to use only a single, main thread for your app, as shown here.
+
+[^3]: Using the parameter name `coro` is a common convention in the API documentation. It refers to a coroutine; i.e., strictly speaking, the result of calling an async def function, and not the function itself
+
+[^4]: Unfortunately, the first parameter of run_in_executor() is the Executor instance to use, and you must pass None in order to use the default. Every time I use this, it feels like the “executor” parameter is crying out to be a kwarg with a default value of None
+
+[^5]: And furthermore, this is how other open source libraries such as Twisted and Tornado have exposed async support in the past.
+
+[^6]: Also acceptable is a legacy, generator-based coroutine, which is a generator function that is decorated with @types.coroutine and uses the yield from keyword internally to suspend. We are going to completely ignore legacy coroutines in this book. Erase them from your mind!
+
+[^7]: The documentation is inconsistent here: the signature is given as AbstractEventLoop.run_until_com plete(future), but it really should be AbstractEventLoop.run_until_complete(coro_or_future) as the same rules apply.
+
+[^8]: Async support can be quite difficult to add to an existing framework after the fact since large structural changes to the codebase might be needed. This was discussed in a GitHub issue for requests.
+
+[^9]: Yes, this is super annoying. Every time I use this call, I can’t help wondering why the more common idiom of using executor=None as a keyword argument was not preferred
+
+[^10]: add_signal_handler() should probably be named set_signal_handler(), since you can have only one handler per signal type; calling add_signal_handler() a second time for the same signal will replace the existing handler for that signal
