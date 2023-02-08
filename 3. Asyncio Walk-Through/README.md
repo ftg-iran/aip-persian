@@ -131,23 +131,23 @@ loop.close() #5
 
 1. `loop = asyncio.get_event_loop()`
 
-- You need a loop instance before you can run any coroutines, and this is how you get one. In fact, anywhere you call it, `get_event_loop()` will give you the same loop instance each time, as long as you’re using only a single thread [^2]. If you’re inside an async def function, you should call `asyncio.get_running_loop()` instead, which always gives you what you expect. This is covered in much more detail later in the book.
+* You need a loop instance before you can run any coroutines, and this is how you get one. In fact, anywhere you call it, `get_event_loop()` will give you the same loop instance each time, as long as you’re using only a single thread [^2]. If you’re inside an async def function, you should call `asyncio.get_running_loop()` instead, which always gives you what you expect. This is covered in much more detail later in the book.
 
 2. `task = loop.create_task(coro)`
 
-- In this case, the specific call is `loop.create_task(main())`. Your coroutine function will not be executed until you do this. We say that create_task() schedules your coroutine to be run on the loop[^3]. The returned task object can be used to monitor the status of the task (for example, whether it is still running or has completed), and can also be used to obtain a result value from your completed coroutine. You can cancel the task with `task.cancel()`.
+* In this case, the specific call is `loop.create_task(main())`. Your coroutine function will not be executed until you do this. We say that create_task() schedules your coroutine to be run on the loop[^3]. The returned task object can be used to monitor the status of the task (for example, whether it is still running or has completed), and can also be used to obtain a result value from your completed coroutine. You can cancel the task with `task.cancel()`.
 
 3. `loop.run_until_complete(coro)`
 
-- This call will block the current thread, which will usually be the main thread. Note that `run_until_complete()` will keep the loop running only until the given coro completes—but all other tasks scheduled on the loop will also run while the loop is running. Internally, `asyncio.run()` calls `run_until_complete()` for you and therefore blocks the main thread in the same way.
+* This call will block the current thread, which will usually be the main thread. Note that `run_until_complete()` will keep the loop running only until the given coro completes—but all other tasks scheduled on the loop will also run while the loop is running. Internally, `asyncio.run()` calls `run_until_complete()` for you and therefore blocks the main thread in the same way.
 
 4. `group = asyncio.gather(task1, task2, task3)`
 
-- When the “main” part of the program unblocks, either due to a [process signal](https://man7.org/linux/man-pages/man7/signal.7.html) being received or the loop being stopped by some code calling loop.stop(), the code after `run_until_complete()` will run. The standard idiom as shown here is to gather the still-pending tasks, cancel them, and then use `loop.run_until_complete()` again until those tasks are done. gather() is the method for doing the gathering. Note that asyncio.run() will do all of the cancelling, gathering, and waiting for pending tasks to finish up.
+* When the “main” part of the program unblocks, either due to a [process signal](https://man7.org/linux/man-pages/man7/signal.7.html) being received or the loop being stopped by some code calling loop.stop(), the code after `run_until_complete()` will run. The standard idiom as shown here is to gather the still-pending tasks, cancel them, and then use `loop.run_until_complete()` again until those tasks are done. gather() is the method for doing the gathering. Note that asyncio.run() will do all of the cancelling, gathering, and waiting for pending tasks to finish up.
 
 5. `loop.close()`
 
-- `loop.close()` is usually the final action: it must be called on a stopped loop, and it will clear all queues and shut down the executor. A stopped loop can be restarted, but a closed loop is gone for good. Internally, `asyncio.run()` will close the loop before returning. This is fine because `run()` creates a new event loop every time you call it.
+* `loop.close()` is usually the final action: it must be called on a stopped loop, and it will clear all queues and shut down the executor. A stopped loop can be restarted, but a closed loop is gone for good. Internally, `asyncio.run()` will close the loop before returning. This is fine because `run()` creates a new event loop every time you call it.
 
 Example 3-1 shows that if you use asyncio.run(), none of these steps are necessary:
 they are all done for you. However, it is important to understand these steps because
@@ -230,7 +230,7 @@ explore what happens if executor functions outlive their async counterparts duri
 
 3. `await loop.run_in_executor(None, func)`
 
-- This is the last of our list of essential, must-know features of asyncio. Sometimes
+* This is the last of our list of essential, must-know features of asyncio. Sometimes
 you need to run things in a separate thread or even a separate process: this
 method is used for exactly that. Here we pass our blocking function to be run in
 the default executor.[^4] Note that `run_in_executor()` does not block the main
@@ -302,23 +302,23 @@ These are the tiers that are most important to focus on when learning how to use
 
 Tier 1
 
-- Understanding how to write async def functions and use await to call and exe‐
+* Understanding how to write async def functions and use await to call and exe‐
 cute other coroutines is essential.
 
 Tier 2
 
-- Understanding how to start up, shut down, and interact with the event loop is
+* Understanding how to start up, shut down, and interact with the event loop is
 essential.
 
 Tier 5
 
-- Executors are necessary to use blocking code in your async application, and the
+* Executors are necessary to use blocking code in your async application, and the
 reality is that most third-party libraries are not yet asyncio-compatible. A good
 example of this is the SQLAlchemy database ORM library, for which no featurecomparable alternative is available right now for asyncio.
 
 Tier 6
 
-- If you need to feed data to one or more long-running coroutines, the best way to
+* If you need to feed data to one or more long-running coroutines, the best way to
 do that is with asyncio.Queue. This is exactly the same strategy as using
 queue.Queue for distributing data between threads. The Asyncio version of
 Queue uses the same API as the standard library queue module, but uses corou‐
@@ -326,7 +326,7 @@ tines instead of the blocking methods like get().
 
 Tier 9
 
-- The streams API gives you the simplest way to handle socket communication
+* The streams API gives you the simplest way to handle socket communication
 over a network, and it is here that you should begin prototyping ideas for
 network applications. You may find that more fine-grained control is needed, and
 then you could switch to the protocols API, but in most projects it’s usually best
@@ -401,7 +401,7 @@ function, except that it begins with the keywords async def.
 <class 'generator'>
 ```
 
-- Even though g is sometimes incorrectly referred to as a “generator,” it remains a
+* Even though g is sometimes incorrectly referred to as a “generator,” it remains a
 function, and it is only when this function is evaluated that the generator is
 returned. Coroutine functions work in exactly the same way: you need to call the
 async def function to obtain the coroutine object
@@ -744,7 +744,8 @@ Of course, it is unlikely that you will work with Future directly in the way sho
 You might wonder what happens if you call set_result() on a Task instance. It was possible to do this before Python 3.8, but it is no longer allowed. Task instances are wrappers for coroutine objects, and their result values can be set only internally as the result of the underlying coroutine function, as shown in Example 3-17.
 
 Example 3-17. Calling set_result() on a Task
-TODO: 
+TODO:
+
 ``` python
 >>> import asyncio
 >>> from contextlib import suppress
@@ -779,7 +780,7 @@ True
 
 3. We can, however, still cancel() a task, which will raise CancelledError inside the underlying coroutine.
 
-### Create a Task? Ensure a Future? Make Up Your Mind!
+### Create a Task? Ensure a Future? Make Up Your Mind
 
 TODO: internal link
 
@@ -990,7 +991,7 @@ of the context manager. I have added the await keyword, which tells us that this
 coroutine will allow the event loop to run other tasks while we wait for the net‐
 work call to complete.
 
-- Note that we cannot simply tack on the await keyword to anything. This change
+* Note that we cannot simply tack on the await keyword to anything. This change
 presupposes that we were also able to modify the download_webpage() function
 itself, and convert it into a coroutine that is compatible with the await keyword.
 For the times when it is not possible to modify the function, a different approach
@@ -1000,7 +1001,7 @@ is needed; we’ll discuss that in the next example.
 ing to keep the code simple, so I’ve omitted the usual try/finally handler that
 you should normally write to deal with exceptions raised in the body of caller.
 
-- Note that the presence of yield is what changes a function into a generator func‐
+* Note that the presence of yield is what changes a function into a generator func‐
 tion; the additional presence of the async def keywords in point 1 makes this an
 asynchronous generator function. When called, it will return an asynchronous gen‐
 erator. The inspect module has two functions that can test for these:
@@ -1885,7 +1886,8 @@ ultimately result in the main() task exiting; when that happens, the cleanup han
 dling inside asyncio.run() will take over.
 
 ### Waiting for the Executor During Shutdown
-TODO: internal 
+
+TODO: internal
 “Quickstart” on page 22 introduced the basic executor interface with Example 3-3,
 where I pointed out that the blocking time.sleep() call was conveniently shorter
 than the asyncio.sleep() call—luckily for us, because it means the executor task
@@ -2056,7 +2058,7 @@ This solution is better behaved during shutdown, and I encourage you to run the
 example and hit Ctrl-C immediately after “Hello!” is printed. The shutdown process
 will still wait for make_coro() to exit, which means that it also waits for our executor
 job to exit. However, this code is very clumsy because you have to wrap every execu‐
-tor Future instance inside a make_coro() call. 
+tor Future instance inside a make_coro() call.
 
 If we’re willing to give up the convenience of the asyncio.run() function (until
 Python 3.9 is available), we can do better with custom loop handling, shown in
