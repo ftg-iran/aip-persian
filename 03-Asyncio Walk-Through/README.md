@@ -160,9 +160,9 @@ The preceding example is still too simplistic to be useful in a practi‐
 cal setting. More information around correct shutdown handling is
 required. The goal of the example is merely to introduce the most
 important functions and methods in asyncio. More practical infor‐
-mation for shutdown handling is presented in “Starting Up and
-Shutting Down (Gracefully!)” on page 57.
-TODO: internal link
+mation for shutdown handling is presented in [“Starting Up and
+Shutting Down (Gracefully!)” on page 57](#starting-up-and-shutting-down-gracefully).
+
 asyncio in Python exposes a great deal of the underlying machinery around the
 event loop—and requires you to be aware of aspects like lifecycle management. This
 is different from Node.js, for example, which also contains an event loop but keeps it
@@ -220,12 +220,10 @@ even call this function from anywhere in the main thread, which is where the
 asyncio loop is running. We solve this problem by running this function in an
 executor.
 
-TODO: “Waiting for the Executor During Shutdown” on page 68
-
 2. Unrelated to this section, but something to keep in mind for later in the book:
 note that the blocking sleep time (0.5 seconds) is shorter than the nonblocking
 sleep time (1 second) in the `main()` coroutine. This makes the code sample neat
-and tidy. In “Waiting for the Executor During Shutdown” on page 68 we’ll
+and tidy. In [“Waiting for the Executor During Shutdown” on page 68](#waiting-for-the-executor-during-shutdown) we’ll
 explore what happens if executor functions outlive their async counterparts during the shutdown sequence.
 
 3. `await loop.run_in_executor(None, func)`
@@ -275,7 +273,17 @@ things in a different order, and that’s OK!
 
 Table 3-1. Features of asyncio arranged in a hierarchy; for end-user developers, the most important tiers are highlighted in bold.
 
-TODO: Table
+Level | Concept | Implementation |
+--- | --- | --- |
+**Tier 9** | **Network: streams** | StreamReader, StreamWriter, asyncio.open_connection(), asyncio.start_server() |
+Tier 8 | Network: TCP & UDP | Protocol|
+Tier 7 | Network: transports| BaseTransport|
+**Tier 6** | **Tools** | asyncio.Queue|
+**Tier 5** | **Subprocesses & threads** | run_in_executor(), asyncio.subprocess|
+Tier 4 | Tasks | asyncio.Task, asyncio.create_task()|
+Tier 3 |Futures | asyncio.Future|
+**Tier 2** |**Event loop**| asyncio.run(), BaseEventLoop|
+**Tier 1 (Base)** |**Coroutines**| async def, async with, async for, await|
 
 At the most fundamental level, Tier 1, we have the coroutines that you’ve already seen earlier in this book. This is the lowest level at which one can begin to think about designing a third-party framework, and surprisingly, this turns out to be somewhat popular with not one, but two, async frameworks currently available in the wild: [Curio](https://github.com/dabeaz/curio) and [Trio](https://github.com/python-trio/trio). Both of these rely only on native coroutines in Python, and nothing whatsoever from the asyncio library module.
 
@@ -675,9 +683,7 @@ It is also possible to use another low-level function called `asyncio.ensure_fut
 
 ### Tasks and Futures
 
-Earlier we covered coroutines, and how they need to be run on a loop to be useful. Now I want to talk briefly about the Task and Future APIs. The one you will work with the most is Task, as most of your work will involve running coroutines with the `create_task()` function, exactly as set out in “Quickstart” on page 22. The Future class is actually a superclass of Task, and it provides all of the functionality for interaction with the loop.
-
-TODO: “Quickstart” on page 22
+Earlier we covered coroutines, and how they need to be run on a loop to be useful. Now I want to talk briefly about the Task and Future APIs. The one you will work with the most is Task, as most of your work will involve running coroutines with the `create_task()` function, exactly as set out in [“Quickstart” on page 22](#quickstart). The Future class is actually a superclass of Task, and it provides all of the functionality for interaction with the loop.
 
 A simple way to think of it is like this: a Future represents a future completion state of some activity and is managed by the loop. A Task is exactly the same, but the specific “activity” is a coroutine— probably one of yours that you created with an async def function plus `create_task()`.
 
@@ -744,7 +750,6 @@ Of course, it is unlikely that you will work with Future directly in the way sho
 You might wonder what happens if you call set_result() on a Task instance. It was possible to do this before Python 3.8, but it is no longer allowed. Task instances are wrappers for coroutine objects, and their result values can be set only internally as the result of the underlying coroutine function, as shown in Example 3-17.
 
 Example 3-17. Calling set_result() on a Task
-TODO:
 
 ``` python
 >>> import asyncio
@@ -782,9 +787,7 @@ True
 
 ### Create a Task? Ensure a Future? Make Up Your Mind
 
-TODO: internal link
-
-In “Quickstart” on page 22, I said that the way to run coroutines was to use `asyncio.create_task()`. Before that function was introduced, it was necessary to obtain a loop instance and use loop.create_task() to do the same thing. This can, in fact, also be achieved with a different module-level function: `asyncio.ensure_future()`. Some developers recommended create_task(), while
+In [“Quickstart”](#quickstart) on page 22, I said that the way to run coroutines was to use `asyncio.create_task()`. Before that function was introduced, it was necessary to obtain a loop instance and use loop.create_task() to do the same thing. This can, in fact, also be achieved with a different module-level function: `asyncio.ensure_future()`. Some developers recommended create_task(), while
 others recommended ensure_future().
 
 During my research for this book, I became convinced that the API method `asyncio.ensure_future()` is responsible for much of the widespread misunderstanding about the asyncio library. Much of the API is really quite clear, but there are a few bad stumbling blocks to learning, and this is one of them. When you come across `ensure_future()`, your brain works very hard to integrate it into your mental model of how asyncio should be used—and likely fails!
@@ -1269,9 +1272,8 @@ a simple range, yielding a tuple of the value and its double.
 2. Sleep a little, just to emphasize that this is really an async function.
 
 3. An async list comprehension: note how async for is used instead of the usual
-for. This difference is the same as that shown in the examples in “Async Iterators:
-TODO: internal link
-async for” on page 50.
+for. This difference is the same as that shown in the examples in [“Async Iterators:
+async for” on page 50](#async-iterators-async-for).
 
 4. An async dict comprehension; all the usual tricks work, such as unpacking the
 tuple into x and y so that they can feed the dict comprehension syntax.
@@ -1345,8 +1347,8 @@ start up and shut down correctly.
 
 Of the two, startup is simpler. The standard way of starting up an asyncio application
 is to have a main() coroutine function and call it with asyncio.run(), as shown in
-TODO: internal link
-Example 3-2 at the beginning of this chapter.
+
+[Example 3-2](./examples/3-2.py) at the beginning of this chapter.
 Generally, startup will be fairly straightforward; for the server case described earlier,
 you can read more about it [in the docs](https://docs.python.org/3/library/asyncio-stream.html#tcp-echo-server-using-streams). We’ll also briefly look at a demonstration of
 server startup in an upcoming code example.
@@ -1374,7 +1376,6 @@ Example 3-29. Destroyer of pending tasks
 ``` python
 # taskwarning.py
 import asyncio
-Starting Up and Shutting Down (Gracefully!) | 57
 async def f(delay):
     await asyncio.sleep(delay)
 
@@ -1559,9 +1560,7 @@ And finally: if you’re using a library or framework, make sure to follow its d
 tation on how you should perform startup and shutdown. Third-party frameworks
 usually provide their own functions for startup and shutdown, and they’ll provide
 event hooks for customization. You can see an example of these hooks with the Sanic
-framework in “Case Study: Cache Invalidation” on page 115.
-
-TODO:  internal link
+framework in [“Case Study: Cache Invalidation” on page 115](https://github.com/ftg-iran/aip-persian/blob/main/04-20%20Asyncio%20Libraries%20You%20Aren%E2%80%99t%20Using/README.md#case-study-cache-invalidation).
 
 ### What Is the return_exceptions=True for in gather()?
 
@@ -1887,8 +1886,7 @@ dling inside asyncio.run() will take over.
 
 ### Waiting for the Executor During Shutdown
 
-TODO: internal
-“Quickstart” on page 22 introduced the basic executor interface with Example 3-3,
+[“Quickstart”](#quickstart) on page 22 introduced the basic executor interface with Example 3-3,
 where I pointed out that the blocking time.sleep() call was conveniently shorter
 than the asyncio.sleep() call—luckily for us, because it means the executor task
 completes sooner than the main() coroutine, and as a result the program shuts down
@@ -2137,7 +2135,7 @@ around clean shutdown handling.
 
 [^7]: The documentation is inconsistent here: the signature is given as AbstractEventLoop.run_until_com plete(future), but it really should be AbstractEventLoop.run_until_complete(coro_or_future) as the same rules apply.
 
-[^8]: Async support can be quite difficult to add to an existing framework after the fact since large structural changes to the codebase might be needed. This was discussed in a GitHub issue for requests.
+[^8]: Async support can be quite difficult to add to an existing framework after the fact since large structural changes to the codebase might be needed. This was discussed in a [GitHub issue for requests](https://github.com/psf/requests/issues/2801).
 
 [^9]: Yes, this is super annoying. Every time I use this call, I can’t help wondering why the more common idiom of using executor=None as a keyword argument was not preferred
 
