@@ -1,19 +1,30 @@
-# Chapter 4
-# 20 Asyncio Libraries You Aren’t Using (But…Oh, Never Mind)
+# فصل 4
+# 20 کتابخانه Asyncio که از آن‌ها استفاده نمی‌کنید (اما اهمیتی ندارد)
 <hr>
 
 
 In this chapter, we look at case studies using the new Python features for async programming. We’ll be making use of several third-party libraries, as you will in your own projects.
 
+در این فصل مواردی را با استفاده از امکانات جدید پایتون برای برنامه‌نویسی همزمان بررسی می‌کنیم. ما از چندین کتابخانه‌ی third-party استفاده خواهیم کرد؛ همانطور که شما نیز در پروژه‌های خود از آن‌ها بهره خواهید برد. 
+
 The title of this chapter is a play on the title of a previous book I wrote called 20 Python Libraries You Aren’t Using (But Should) (O’Reilly). Many of those libraries will also be useful in your asyncio-based applications, but this chapter focuses on libraries that have been designed specifically for the new async features in Python.
+
+عنوان این فصل نمایشنامه‌ای بر روی عنوان کتاب قبلی من با نام 20 Python Libraries You Aren't Using (But Should) (O'Reilly) است. بسیاری از آن کتابخانه‌ها برای اپلیکیشن‌های همزمان شما نیز مفید خواهند بود، اما این فصل بر روی کتابخانه‌هایی تمرکز دارد که به طور ویژه برای امکانات همزمان جدید پایتون طراحی شده‌اند.
+
 
 It is difficult to present asyncio-based code in short snippets. As you have seen in all the previous code samples in the book, I’ve tried to make each example a complete, runnable program, because application lifetime management is a core consideration for using async programming correctly.
 
+نمایش دادن کدهای همزمان به صورت تکه‌های کوتاه دشوار است. همانطور که نمونه کدهای پیشین در این کتاب را مشاهده کرده‌اید، تلاش کرده‌ام که هر مثال را به صورت برنامه‌ای کامل و قابل اجرا ارائه دهم، زیرا مدیریت طول عمر برنامه نکته‌ای اساسی برای استفاده صحیح از  برنامه‌نویسی همزمان است.  
+
 For this reason, most of the case studies in this chapter will be somewhat larger, in terms of lines of code, than is usual for such a book. My goal in using this approach is to make the case studies more useful by giving you a “whole view” of an async program rather than leaving you to figure out how detached fragments might fit together.
+
+به همین دلیل، بسیاری از نمونه کدها در این فصل از جهت تعداد خطوط کد تا حدودی بزرگ‌تر از حد معمول برای چنین کتابی خواهند بود. هدف من از به‌کارگیری این رویکرد مفیدتر کردن مثال‌ها با ارائه یک "نمای کلی" از یک برنامه‌ی همزمان است تا شما دیگر ناچار به تطبیق قطعات جداگانه با یکدیگر نباشید.  
 
 <!-- ![image_00](images/00.png) -->
 
 > Some of the code samples in this chapter compromise on style in order to save space. I like PEP8 as much as the next Pythonista, but practicality beats purity!
+
+برخی از مثال‌های این فصل به جهت صرفه‌جویی در فضا  شیوه‌نامه‌های نوشتاری را دنبال نمی‌کنند. من PEP8 را به انداز  Pythinosta بعدی دوست دارم، اما به طور عملی خلوص را شکست می‌دهد.
 
 ## Streams (Standard Library)
 
