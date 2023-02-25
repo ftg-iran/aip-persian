@@ -18,7 +18,7 @@ It is difficult to present asyncio-based code in short snippets. As you have see
 
 For this reason, most of the case studies in this chapter will be somewhat larger, in terms of lines of code, than is usual for such a book. My goal in using this approach is to make the case studies more useful by giving you a “whole view” of an async program rather than leaving you to figure out how detached fragments might fit together.
 
-به همین دلیل، بسیاری از نمونه کدها در این فصل از جهت تعداد خطوط کد تا حدودی بزرگ‌تر از حد معمول برای چنین کتابی خواهند بود. هدف من از به‌کارگیری این رویکرد مفیدتر کردن مثال‌ها با ارائه یک "نمای کلی" از یک برنامه‌ی همزمان است تا شما دیگر ناچار به تطبیق قطعات جداگانه با یکدیگر نباشید.  
+به همین دلیل، بسیاری از موردپژوهی‌ها در این فصل از جهت تعداد خطوط کد تا حدودی بزرگ‌تر از حد معمول برای چنین کتابی خواهند بود. هدف من از به‌کارگیری این رویکرد مفیدتر کردن موردپژوهی‌ها با ارائه یک "نمای کلی" از یک برنامه‌ی همزمان است تا شما دیگر ناچار به تطبیق قطعات جداگانه با یکدیگر نباشید.  
 
 <!-- ![image_00](images/00.png) -->
 
@@ -27,30 +27,52 @@ For this reason, most of the case studies in this chapter will be somewhat large
 برخی از مثال‌های این فصل به جهت صرفه‌جویی در فضا  شیوه‌نامه‌های نوشتاری را دنبال نمی‌کنند. من PEP8 را به انداز  Pythinosta بعدی دوست دارم، اما به طور عملی خلوص را شکست می‌دهد.
 
 ## Streams (Standard Library)
-
+## کتابخانه Streams (کتابخانه استاندارد)
 Before looking at third-party libraries, let’s begin with the standard library. The streams API is the high-level interface offered for async socket programming, and as the following case study will show, it’s pretty easy to use. However, application design remains complex simply because of the nature of the domain.
 
-The following case study shows an implementation of a message broker, with an initial naive design followed by a more considered design. Neither should be considered production-ready; my goal is to help you think about the various aspects of concurrent network programming that need to be taken into account when designing such applications.
+پیش از آنکه کتابخانه‌های third-party را بررسی کنیم، بهتر است از کتابخانه استاندارد شروع کنیم. streams API رابط کاربری سطح بالایی است که برای برنامه‌نویسی سوکت همزمان ارائه شده است، و همانطور که موردپژوهی بعدی نشان خواهد داد، استفاده از آن بسیار آسان است. با این وجود، طراحی برنامه همچنان به دلیل ماهیت این مبحث پیچیده است.
+
+The following case study shows an implementation of a message broker, with an initial naive design followed by a more design. Neither should be considered production-ready; my goal is to help you think about the various aspects of concurrent network programming that need to be taken into account when designing such applications.
+
+موردپژوهی‌‌ای که در ادامه به آن می‌پردازیم اجرای یک واسط پیام (message broker) را با یک طراحی اولیه ساده و به  دنبال آن یک طراحی سنجیده‌تر نشان می‌دهد. هیچ یک از این طراحی‌ها نباید جهت استفاده در محیط اماده‌ برای استقرار آماده در نظر گرفته شوند؛ هدف من این است که شما را به تفکر درباره جنبه‌های گوناگون برنامه‌نویسی شبکه همروند  (cuncurrent network programming) که باید در زمان طراحی چنین برنامه‌ای در نظر گرفته شوند وادار کنم.
 
 ### Case Study: A Message Queue
 
-
+### موردپژوهی: صف پیام (Message Queue)
 A message queue service is a backend application that receives connections from other applications and passes messages between those connected services, often referred to as publishers and subscribers. Subscribers typically listen to specific channels for messages, and usually it is possible to configure the message distribution in different channels in two ways: messages can be distributed to all subscribers on a channel (pub-sub), or a different message can go to each subscriber one at a time (point-to-point).
 
+صف پیام یا همان message queue یک اپلیکیشن بکند است که از دیگر اپلیکیشن‌ها اتصالات را دریافت کرده و پیام‌هایی را میان سرویس‌های متصل رد و بدل می‌کند. از این سرویس‌ها معمولا با نام‌های انتشاردهندگان (publishers) و مشترکین (subscribers) یاد می‌شود. مشترکین معمولا جهت دریافت پیام‌ها به کانال‌های مشخصی گوش می‌دهند. معمولا می‌توان توزیع پیام در کانال‌های مختلف را به دو روش پیکربندی کرد: پیام‌ها می‌توانند به تمام مشترکین یک کانال ارسال شوند (pub-sub)، و یا هر بار یک پیام متفاوت می‌تواند به یک مشترک ارسال شود (point-to-point).
+
 Recently, I worked on a project that involved using ActiveMQ as a message broker for microservices intercommunication. At a basic level, such a broker (server):
+
+اخیرا، من بر روی پروژه‌ای کار کردم که در آن از ActiveMQ به عنوان واسط پیام برای ارتباط داخلی میکروسرویس‌ها استفاده شد. در سطح پایه، چنین واسطی (سرور) به شرح زیر عمل می‌کند:
 
 - Maintains persistent socket connections to multiple clients
 - Receives messages from clients with a target channel name
 - Delivers those messages to all other clients subscribed to that same channel name
 
+- اتصالات پایدار سوکت را برای چندین مشتری حفظ می‌کند
+- پیام‌ها را از مشتری با نام کانال مورد نظر دریافت می‌کند
+- پیام‌های دریافتی را به تمام مشتریان دیگری که از مشترکین کانال مورد نظر هستند ارسال می‌کند
+
 I recall wondering how hard it might be to create such an application. As an added touch, ActiveMQ can perform both models of message distribution, and the two models are generally differentiated by the channel name:
+
+به یاد می‌آورم که فکر می‌کردم ساخت چنین اپلیکیشنی می‌تواند تا چه حد مشکل باشد. به عنوان یک نکته اضافی، ActiveMQ می‌تواند هر دو مدل توزیع پیام را اجرا کند، و این دو مدل به طور کلی با توجه به نام کانال از یکدیگر متمایز می‌شوند: 
 
 - Channel names with the prefix /topic (e.g., /topic/customer/registration) are managed with the pub-sub pattern, where all channel subscribers get all messages.
 - Channel names with the prefix /queue are handled with the point-to-point model, in which messages on a channel are distributed between channel subscribers in a round-robin fashion: each subscriber gets a unique message.
 
+- نام کانال‌ها با پیشوند topic/ (به طور مثال: /topic/customer/registration) با الگوی pub-sub مدیریت می‌شوند. در این مدل تمامی مشترکین کانال تمامی پیام‌ها را دریافت می‌کنند.
+- نام کانال‌ها با پیشوند queue/ با استفاده از مدل point-to-point مدیریت می‌شوند. در این مدل پیام‌های یک کانال میان مشترکین کانال با الگوی round-robin توزیع می‌شوند. (هر یک از مشترکین یک پیام منحصر‌به‌فرد دریافت می‌کند)
+
 In our case study, we will build a toy message broker with these basic features. The first issue we must address is that TCP is not a message-based protocol: we just get streams of bytes on the wire. We need to create our own protocol for the structure of messages, and the simplest protocol is to prefix each message with a size header, followed by a message payload of that size. The utility library in Example 4-1 provides read and write capabilities for such messages.
 
+ در این موردپژوهی، ما با استفاده از این امکانات اولیه یک واسط پیام آزمایشی خواهیم ساخت. اولین مشکلی که باید به آن بپردازیم آن است که TCP یک پروتکل مبتنی بر پیام نیست. در این پروتکل ما تنها می‌توانیم جریانی از بایت‌ها را در شبکه دریافت کنیم. ما باید پروتکل خود را برای ساختار پیام‌ها ایجاد کنیم. ساده‌ترین پروتکل این است که هر پیام را با یک هدر اندازه شروع کرده و به دنبال آن پیامی با همان آن اندازه را قرار دهیم. کتابخانه‌ کاربردی در مثال 1-4 قابلیت خواندن و نوشتن را برای چنین پیام‌هایی فراهم مي‌کند.
+
 ***Example 4-1. Message protocol: read and write***
+
+***مثال 1-4. پروتکل پیام: خواندن و نوشتن***
+
 
 ```python
 # msgproto.py
@@ -73,9 +95,19 @@ async def send_msg(stream: StreamWriter, data: bytes):
 3. Now we know the payload size, so we read that off the stream.
 4. Write is the inverse of read: first we send the length of the data, encoded as 4 bytes, and thereafter the data.
 
+1. چهار بایت اول را بگیرید
+2. این 4 بایت باید به عدد (integer) تبدیل شوند
+3. حال ما اندازه پیام را می‌دانیم، پس به همان اندازه از استریم می‌خوانیم
+4. عملیات نوشتن برعکس عملیات خواندن است: ابتدا طول داده  با رمزگذاری 4 بایتی، و سپس داده را ارسال می‌کنیم.
+
+
 Now that we have a rudimentary message protocol, we can focus on the message broker application in Example 4-2.
 
+حال که یک پروتکل پیام پایه‌ای داریم، می‌توانیم روی برنامه واسط پیام در مثال 2-4 تمرکز کنیم.
+
 ***Example 4-2. A 40-line prototype server***
+
+***مثال 2-4. یک سرور نمونه با 40 خط کد***
 
 ```python
 # mq_server.py 
