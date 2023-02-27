@@ -18,7 +18,7 @@ It is difficult to present asyncio-based code in short snippets. As you have see
 
 For this reason, most of the case studies in this chapter will be somewhat larger, in terms of lines of code, than is usual for such a book. My goal in using this approach is to make the case studies more useful by giving you a “whole view” of an async program rather than leaving you to figure out how detached fragments might fit together.
 
-به همین دلیل، بسیاری از موردپژوهی‌ها در این فصل از جهت تعداد خطوط کد تا حدودی بزرگ‌تر از حد معمول برای چنین کتابی خواهند بود. هدف من از به‌کارگیری این رویکرد مفیدتر کردن موردپژوهی‌ها با ارائه یک "نمای کلی" از یک برنامه‌ی همزمان است تا شما دیگر ناچار به تطبیق قطعات جداگانه با یکدیگر نباشید.  
+به همین دلیل، بسیاری از موردپژوهی‌ها در این فصل از جهت تعداد خطوط کد تا حدودی بزرگ‌تر از حد معمول برای چنین کتابی خواهند بود. هدف من از به‌کارگیری این رویکرد مفیدتر کردن موردپژوهی‌ها با ارائه یک "نمای ی" از یک برنامه‌ی همزمان است تا شما دیگر ناچار به تطبیق قطعات جداگانه با یکدیگر نباشید.  
 
 <!-- ![image_00](images/00.png) -->
 
@@ -156,20 +156,58 @@ except KeyboardInterrupt:
 ```
 
 1. Imports from our msgproto.py module.
+
+1. وابستگی‌ها از ماژول msgproto.py وارد می‌شوند. 
+
 2. A global collection of currently active subscribers. Every time a client connects, they must first send a channel name they’re subscribing to. A deque will hold all the subscribers for a particular channel.
+
+2. مجموعه‌ای کلی از مشترکین فعال حال حاضر. هر زمان که یک مشتری ارتباط برقرار می‌کند، ابتدا باید نام کانالی که در آن اشتراک دارد را ارسال کند. یک صف (deque) تمامی مشترکین برای یک کانال خاص را ذخیره می‌کند.
+
 3. The client() coroutine function will produce a long-lived coroutine for each new connection. Think of it as a callback for the TCP server started in main(). On this line, I’ve shown how the host and port of the remote peer can be obtained, for example, for logging.
+
+3. تابع client() coroutine برای هر اتصال جدید یک coroutine بلندمدت ایجاد می‌کند. می‌توان آن را به  عنوان یک بازخوانی سرور (server callback) TCP که در ()main شروع شد در نظر گرفت. در این خط نشان داده‌ام که چگونه می‌توان میزبان و پورت همتای راه دور را به دست آورد؛ به طور مثال برای ورود به سیستم.
+
 4. Our protocol for clients is the following:
     - On first connect, a client must send a message containing the channel to subscribe to (here, subscribe_chan).
     - Thereafter, for the life of the connection, a client sends a message to a channel by first sending a message containing the destination channel name, followed by a message containing the data. Our broker will send such data messages to every client subscribed to that channel name.
+
+4. پروتکل ما برای مشتریان به شرح زیر است:
+- در اولین اتصال، مشتری باید پیام را به همراه نام کانالی که قصد اشتراک در آن را دارد ارسال کند (در اینجا subscribe_chan)
+- پس از آن، در طی زمان اتصال، هر مشتری ابتدا با ارسال پیامی حاوی نام کانال مقصد، و به دنبال آن پیامی حاوی داده، پیامی را به کانال ارسال می‌کند. واسط ما چنین پیام‌هایی را به تمام مشترکان آن کانال ارسال خواهد کرد.
+
 5. Add the StreamWriter instance to the global collection of subscribers.
+
+5. StreamWriter instance را به مجموعه‌ی کلی مشترکین اضافه کنید.
+
 6. An infinite loop, waiting for data from this client. The first message from a client must be the destination channel name.
+
+6. یک حلقه‌ی بی‌نهایت که در انتظار برای دریافت داده از این مشتری است. اولین پیام از سوی مشتری باید نام کانال مقصد باشد.
+
 7. Next comes the actual data to distribute to the channel.
+
+7. در قدم بعدی دیتای اصلی که قرار است در کانال توزیع شود می‌آید.
+
 8. Get the deque of subscribers on the target channel.
+
+8. صفی که حاوی مشترکین کانال هدف است را دریافت کنید.
+
 9. Some special handling if the channel name begins with the magic word /queue: in this case, we send the data to only one of the subscribers, not all of them. This can be used for sharing work between a bunch of workers, rather than the usual pub-sub notification scheme, where all subscribers on a channel get all the messages.
+
+9. برخی دستورالعمل‌های خاص در شرایطی که نام کانال با پیشوند queue/ آغاز می‌شود: در این صورت، داده‌ها را تنها برای یکی از مشترکین، و نه تمام آن‌ها، ارسال می‌کنیم. این راه حل می‌تواند برای به اشتراک‌گذاری کار بین یک گروه از workerها به جای روش معمول اعلان pub-sub، که در آن همه مشترکین کانال تمامی پیام‌ها را دریافت می‌کنند به کار گرفته شود. 
+
 10. Here is why we use a deque and not a list: rotation of the deque is how we keep track of which client is next in line for /queue distribution. This seems expensive until you realize that a single deque rotation is an O(1) operation.
+
+10. چرا از deque به جای list استفاده می‌کنیم: چرخش deque به ما برای ردیابی مشتری بعدی در لیست توزیع queue\ کمک می‌کند. به نظر می‌رسد که این روش هزینه بالایی داشته باشد، البته تا زمانی که متوجه شوید هر چرخش در deque از مرتبه زمانی O(1) برخوردار است. 
+
 11. Target only whichever client is first; this changes after every rotation.
+
+11. فقط هر مشتری که در صف اول است را هدف قرار دهید. در هر دور پس از چرخش صف اولین مشتری تغییر می‌کند.
+
 12. Create a list of coroutines for sending the message to each writer, and then unpack these into gather() so we can wait for all of the sending to complete.
 This line is a bad flaw in our program, but it may not be obvious why: though it may be true that all of the sending to each subscriber will happen concurrently, what happens if we have one very slow client? In this case, the gather() will finish only when the slowest subscriber has received its data. We can’t receive any more data from the sending client until all these send_msg() coroutines finish. This slows all message distribution to the speed of the slowest subscriber.
+
+12. 
+
 13. When leaving the client() coroutine, we make sure to remove ourselves from the global SUBSCRIBERS collection. Unfortunately, this is an O(n) operation, which can be a little expensive for very large n. A different data structure would fix this, but for now we console ourselves with the knowledge that connections are intended to be long-lived—thus, there should be few disconnection events—and n is unlikely to be very large (say ~10,000 as a rough order-of-magnitude estimate), and this code is at least easy to understand.
 
 So that’s our server; now we need clients, and then we can show some output. For demonstration purposes, I’ll make two kinds of clients: a sender and a listener. The server doesn’t differentiate; all clients are the same. The distinction between sender and listener behavior is only for educational purposes. Example 4-3 shows the code for the listener application.
