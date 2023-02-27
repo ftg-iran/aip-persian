@@ -206,13 +206,22 @@ except KeyboardInterrupt:
 12. Create a list of coroutines for sending the message to each writer, and then unpack these into gather() so we can wait for all of the sending to complete.
 This line is a bad flaw in our program, but it may not be obvious why: though it may be true that all of the sending to each subscriber will happen concurrently, what happens if we have one very slow client? In this case, the gather() will finish only when the slowest subscriber has received its data. We can’t receive any more data from the sending client until all these send_msg() coroutines finish. This slows all message distribution to the speed of the slowest subscriber.
 
-12. 
+12. یک لیست از coroutineها برای ارسال پیام به هر نویسنده ایجاد کنید. سپس آن‌ها را در ()gather باز کنید تا بتوانیم برای اتمام همه‌ ارسال‌‌ها منتظر بمانیم. 
+این خط یک نقص در برنامه ما است، اما ممکن است دلیل آن روشن نباشد: اگرچه ممکن است درست باشد که تمام ارسال‌ها به هر یک از مشترکین به صورت همزمان انجام خواهد شد، اما اگر یک مشترک بسیار کند داشته باشیم چه اتفاقی خواهد افتاد؟ در این صورت، ()gather زمانی به پایان می‌رسد که کندترین مشتری داده خود را دریافت کرده باشد. تا زمانی که روتین‌های ()send_msg تمام نشده‌اند نمی‌توانیم داده بیش‌تری از مشتری ارسال‌کننده دریافت کنیم. این مسئله سرعت توزیع تمام پیام‌ها را به اندازه سرعت کندترین مشترک کاهش می‌دهد. 
+
 
 13. When leaving the client() coroutine, we make sure to remove ourselves from the global SUBSCRIBERS collection. Unfortunately, this is an O(n) operation, which can be a little expensive for very large n. A different data structure would fix this, but for now we console ourselves with the knowledge that connections are intended to be long-lived—thus, there should be few disconnection events—and n is unlikely to be very large (say ~10,000 as a rough order-of-magnitude estimate), and this code is at least easy to understand.
 
+13. زمانی که از روتین ()client خارج می‌شویم،‌ مطمئن می‌شویم که خود را از مجموعه‌ی کلی مشترکین (SUBSCRIBERS) نیز حذف کنیم. متاسفانه مرتبه زمانی این عملیات O(n) است که می‌تواند برای n بسیار بزرگ کمی هزینه‌بر باشد. یک ساختار داده متفاوت می‌تواند این مشکل را برطرف کند. اما در حال حاضر خودمان را با این دانش تسلی می‌دهیم که اتصالات برای زمان طولانی در نظر گرفته شده‌اند، بنابراین با رویدادهای قطعی ارتباط‌ کمی مواجه خواهیم شد. همچنین مقدار بسیار بزرگ (مثلا 10000~ به عنوان تخمین مرتبه بزرگی) برای n بعید است. همینطور درک این کد نیز نسبتا راحت است. 
+
 So that’s our server; now we need clients, and then we can show some output. For demonstration purposes, I’ll make two kinds of clients: a sender and a listener. The server doesn’t differentiate; all clients are the same. The distinction between sender and listener behavior is only for educational purposes. Example 4-3 shows the code for the listener application.
+ 
+پس این سرورِ ما است. اکنون به مشتریان نیاز داریم، و سپس می‌توانیم برخی از خروجی‌ها را نشان دهیم. برای اهداف نمایشی،‌ دو نوع مشتری خواهم ساخت: یک فرستنده و یک شنونده. در سرور تفاوتی ایجاد نمی‌شود، تمامی مشتریان یکسان هستند و تفاوت میان عملکرد فرستنده و شنونده تنها برای اهداف آموزشی است. مثال 3-4 کد مربوط به برنامه شنونده را نشان می‌دهد.
+
 
 ***Example 4-3. Listener: a toolkit for listening for messages on our message broker***
+
+***مثال 3-4. شنونده: جعبه ابزاری برای گوش دادن به پیام‌ها در واسط پیام***
 
 ```python
 # mq_client_listen.py 
@@ -251,15 +260,36 @@ if __name__ == '__main__':
 ```
 
 1. The uuid standard library module is a convenient way of creating an “identity” for this listener. If you start up multiple instances, each will have its own identity, and you’ll be able to track what is happening in the logs.
+
+1. ماژول کتابخانه استاندارد uuid روشی آسان جهت ایجاد هویت برای این شنونده است. اگر چندین instance را ایجاد کنید، هر یک از آن‌ها هویت مخصوص به خود را خواهد داشت، و شما می‌توانید بدین وسیله آن چه را که در لاگ‌ها اتفاق می‌افتد را ردیابی کنید. 
+
 2. Open a connection to the server.
+
+2. یک ارتباط به سرور برقرار کنید.
+
 3. The channel to subscribe to is an input parameter, captured in args.listen. Encode it into bytes before sending.
+
+3. کانالی که باید در آن مشترک شوید یک وارامتر ورودی است که در args.listen ثبت شده است. پیش از ارسال آن را به بایت کدگذاری کنید.
+
 4. By our protocol rules (as discussed in the broker code analysis previously), the first thing to do after connecting is to send the channel name to subscribe to.
+
+4. طبق قوانین پروتکل ما (همانطور که در تحلیل کد واسط پیام به آن پرداختیم)، اولین کاری که باید پس از اتصال انجام دهیم ارسال نام کانال برای اشتراک است.
+
 5. This loop does nothing else but wait for data to appear on the socket.
+
+5. این حلقه تنها برای دریافت داده بر روی سوکت منتظر می‌ماند.
+
 6. The command-line arguments for this program make it easy to point to a host, a port, and a channel name to listen to.
+
+6. آرگومان‌های خط فرمان برای این برنامه، اشاره به یک میزبان، یک پورت، و یک نام کانال برای گوش دادن را آسان می‌کنند. 
 
 The code for the other client, the sender program shown in Example 4-4, is similar in structure to the listener module.
 
+کد برای مشتری دیگر (برنامه فرستنده) که در مثال 4-4 نشان داده شده است ساختاری مشابه ماژول شنونده دارد. 
+
 ***Example 4-4. Sender: a toolkit for sending data to our message broker***
+
+***مثال 4-4. فرستنده: جعبه ابزاری برای ارسال داده به واسط پیام***
 
 ```python
 # mq_client_sender.py
@@ -308,18 +338,48 @@ if __name__ == '__main__':
 ```
 
 1. As with the listener, claim an identity.
+
+1. همانند شنونده یک هویت مشخص کنید.‌
+
 2. Reach out and make a connection.
+
+2. یک اتصال برقرار کنید.
+
 3. According to our protocol rules, the first thing to do after connecting to the server is to give the name of the channel to subscribe to; however, since we are a sender, we don’t really care about subscribing to any channels. Nevertheless, the protocol requires it, so just provide a null channel to subscribe to (we won’t actually listen for anything).
+
+3. طبق قوانین پروتکل ما، اولین کاری که باید پس از اتصال به سرور انجام دهیم ارسال نام کانال برای اشتراک است؛ با این وجود از آنجایی که ما یک فرستنده هستیم اشتراک در هیچ کانالی برایمان اهمیت ندارد. با این حال پروتکل به ارسال نام کانال نیاز دارد، بنابراین فقط یک null به عنوان نام کانال ارائه دهید (در واقعیت به هیچ چیز گوش نمی‌دهیم)
+
 4. Send the channel to subscribe to.
+
+4. نام کانال برای اشتراک را ارسال کنید.
+
 5. The command-line parameter args.channel provides the channel to which we want to send messages. It must be converted to bytes first before sending.
+
+5. پارامتر خط فرمان args.channel کانالی که قصد ارسال پیام به آن داریم را ارائه می‌دهد. این مقدار باید پیش از ارسال به بایت تبدیل شود.
+
 6. Using itertools.count() is like a while True loop, except that we get an iteration variable to use. We use this in the debugging messages since it makes it a bit easier to track which message got sent from where.
+
+6. استفاده از ()itertools.count مانند استفاده از یک حلقه‌ی while True است. استفاده از این مورد در پیام‌های دیباگ می‌تواند ردیابی مبدا و مقصد پیام‌ها را کمی آسان‌تر کند.
+
 7. The delay between sent messages is an input parameter, args.interval. The next line generates the message payload. It’s either a bytestring of specified size (args.size) or a descriptive message. This flexibility is just for testing.
+
+7. تاخیری که میان پیام‌های ارسال‌شده وجود دارد یک پارامتر ورودی است که در args.interval ارائه می‌شود. خط بعدی پیام مورد نظر را تولید می‌کند. این پیام یا رشته‌ای از بایت‌ها با اندازه‌ای مشخص(args.size)، و یا یک پیام توصیفی است. این انعطاف‌پذیری تنها برای تست و آزمایش است. 
+
 8. Note that two messages are sent here: the first is the destination channel name, and the second is the payload.
+
+8. توجه داشته باشید که در اینجا دو پیام ارسال می‌شود: اولی نام کانال مقصد، و دومی پیام اصلی است. 
+
 9. As with the listener, there are a bunch of command-line options for tweaking the sender: channel determines the target channel to send to, while interval controls the delay between sends. The size parameter controls the size of each message payload.
+
+9. مانند شنونده، گزینه‌های زیادی در خط فرمان برای تغییر دادن فرستنده وجود دارند: channel نام کانال مقصد برای ارسال پیام، و interval تاخیر میان ارسال‌ها را مشخص می‌کند. پارامتر size نیز اندازه متن اصلی هر پیام را کنترل می‌کند. 
 
 We now have a broker, a listener, and a sender; it’s time to see some output. To produce the following code snippets, I started up the server, then two listeners, and then a sender. Then, after a few messages had been sent, I stopped the server with Ctrl-C. The server output is shown in **Example 4-5**, the sender output in **Example 4-6**, and the listener output in Examples **4-7** and **4-8**.
 
+حال ما یک واسط پیام، یک شنونده، و یک فرستنده داریم؛ وقت آن است که کمی از خروجی‌ها را مشاهده کنیم. برای تولید کدهای زیر ابتدا سرور را راه‌اندازی کرده و پس از آن دو شنونده و یک فرستنده را ایجاد کردم. سپس، پس از ارسال چند پیام سرور را با Ctrl-c متوقف کردم. خروجی سرور در **مثال 5-4** نشان داده شده است. خروجی فرستنده در **مثال 6-4**، و خروجی شنونده نیز در مثال‌های **7-4** و **8-4** نشان داده شده‌اند.
+
 ***Example 4-5. Message broker (server) output***
+
+***مثال 5-4. خروجی واسط پیام‌(سرور)***
 
 ```bash
 $ mq_server.py
@@ -343,6 +403,8 @@ Remote ('127.0.0.1', 55386) closed
 
 ***Example 4-6. Sender (client) output***
 
+***مثال 6-4. خروجی فرستنده (مشتری)***
+
 ```bash
 $ mq_client_sender.py --channel /queue/blah
 Starting up 6b5a8e1d 
@@ -351,6 +413,8 @@ Connection ended.
 ```
 
 ***Example 4-7. Listener 1 (client) output***
+
+***مثال 7-4. خروجی شنونده1 ‌(مشتری)***
 
 ```bash
 $ mq_client_listen.py --listen /queue/blah 
@@ -364,6 +428,8 @@ Server closed.
 
 ***Example 4-8. Listener 2 (client) output***
 
+***مثال 8-4. خروجی شنونده2 (مشتری)***
+
 ```bash
 $ mq_client_listen.py --listen /queue/blah 
 Starting up bd4e3baa 
@@ -375,10 +441,17 @@ Server closed.
 ```
 
 Our toy message broker works. The code is also pretty easy to understand, given such a complex problem domain, but unfortunately, the design of the broker code itself is problematic.
+ 
+واسط پیام آزمایشی ما کار می‌کند. همچنین فهم کد نیز با توجه به دامنه‌ پیچیده‌ی مشکل تا حدودی آسان است. اما متاسفانه، طراحی واسط به خودیِ خود مشکل‌ساز است.
 
 The problem is that, for a particular client, we send messages to subscribers in the same coroutine as where new messages are received. This means that if any subscriber is slow to consume what we’re sending, it might take a long time for that await gather(...) line in **Example 4-2** to complete, and we cannot receive and process more messages while we wait.
 
+مشکل این است که برای یک مشتری خاص، جهت ارسال پیام‌ها به مشترکین از همان روتینی استفاده می‌کنیم که پیام‌های جدید در آن دریافت می‌شوند. این بدان معناست که اگر هر یک از مشترکین در دریافت پیامِ ارسالی کند عمل کند، ممکن است کامل شدن خط مربوط به ()await gather در **مثال 2-4** طول بکشد، و ما نمی‌توانیم در زمان انتظار پیام‌های بیش‌تری را دریافت و پردازش کنیم. 
+
 Instead, we need to decouple the receiving of messages from the sending of messages. In the next case study, we refactor our code to do exactly that.
+
+در عوض ما باید دریافت پیام‌ها را از ارسال پیام‌ها جدا کنیم. در موردپژوهی بعدی، کد خود را برای انجام همین کار تغییر خواهیم داد. 
+
 
 ### Case Study: Improving the Message Queue
 
