@@ -596,14 +596,28 @@ except KeyboardInterrupt:
 12. تابع ()chan_sender منطق توزیع برای یک کانال است: این تابع داده را از یک instance صف کانال اختصاصی به تمام مشترکین آن کانال ارسال می‌کند. اما در صورتی که هنوز مشترکی برای این کانال وجود نداشته باشد جه اتفاقی می‌افتد؟ فقط کمی صبر می‌کنیم و سپس دوباره تلاش می‌کنیم. (البته توجه داشته باشید که صف این کانال (CHAN_QUEUES[name]) به پر شدن ادامه خواهد داد.)
 
 13. As in our previous broker implementation, we do something special for channels whose name begins with /queue: we rotate the deque and send only to the first entry. This acts like a crude load-balancing system because each subscriber gets different messages off the same queue. For all other channels, all subscribers get all the messages.
+
+13.  همانند پیاده‌سازی قبلی که برای واسط پیام داشتیم، برای کانال‌هایی که نام آن‌ها با queue/ آغاز می‌شود کار خاصی انجام می‌دهیم: deque را می‌چرخانیم و تنها به اولین ورودی ارسال می‌کنیم. این کار همانند یک سیستم load-balancing ابتدایی عمل می‌کند، زیرا هر یک از مشترکین پیام متفاوتی را از یک صف یکسان دریافت می‌کند. برای تمام کانال‌های دیگر، تمام مشترکین تمام پیام‌ها را دریافت می‌کنند. 
+
 14. We’ll wait here for data on the queue, and exit if None is received. Currently, this isn’t triggered anywhere (so these chan_sender() coroutines live forever), but if logic were added to clean up these channel tasks after, say, some period of inactivity, that’s how it would be done.
+
+14. در اینجا برای داده‌ای که در صف است منتظر می‌مانیم و اگر None دریافت شد خارج می‌شویم. در حال حاضر، این کار در هیچ یک از نقاط برنامه انجام نمی‌شود (پس روتین‌های ()chan_sender تا ابد به فعالیت ادامه می‌دهند)، اما اگر منطقی برای پاکسازی تسک‌های مربوط به کانال‌ها داشته باشیم، مثلا پس از یک دوره عدم فعالیت، می‌توانیم این کار را انجام دهیم.
+
 15. Data has been received, so it’s time to send to subscribers. We do not do the sending here: instead, we place the data onto each subscriber’s own send queue. This decoupling is necessary to make sure that a slow subscriber doesn’t slow down anyone else receiving data. And furthermore, if the subscriber is so slow that their send queue fills up, we don’t put that data on their queue; i.e., it is lost.
+
+15. داده دریافت شده است،‌ پس حالا زمان آن است که آن را به مشترکین ارسال کنیم. عملیات ارسال را در اینجا انجام نمی‌دهیم: در عوض داده را در صف ارسال هر یک از مشترکین قرار می‌دهیم. این جداسازی لازم است تا مطمئن شویم که مشترکینِ کند باعث کاهش سرعت دریافت داده توسط دیگران نمی‌شوند. علاوه بر این،‌ اگر یکی از مشترکین آنقدر کند باشد که صف ارسال وی پر شود، دیتا را به صف او اضافه نمی‌کنیم؛ مثلا آن را از دست رفته در نظر می‌گیریم. 
 
 The preceding design produces the same output as the earlier, simplistic implementation, but now we can be sure that a slow listener will not interfere with message distribution to other listeners.
 
+این طراحی همان خروجی طراحی پیشین که پیاده‌سازی ساده‌تری داشت تولید می‌کند. اما حالا می‌توانیم مطمئن باشیم که یک شنونده‌ی کند در توزیع پیام به دیگر شنونده‌ها تداخلی نخواهد داشت. 
+
 These two case studies show a progression in thinking around the design of a message distribution system. A key aspect was the realization that sending and receiving data might be best handled in separate coroutines, depending on the use case. In such instances, queues can be very useful for moving data between those different coroutines and for providing buffering to decouple them.
 
+این دو موردپژوهی، پیشرفت در تفکر پیرامون طراحی یک سیستم توزیع پیام را نشان می‌دهند. یکی از جنبه‌های کلیدی فهم این نکته بود که بهتر است ارسال و دریافت پیام بسته به مورد استفاده در روتین‌های جداگانه‌ای انجام شوند. در چنین مواردی استفاده از صف‌ها برای جابجایی داده میان روتین‌های متفاوت و همچنین فراهم کردن بافر جهت جداسازی آن‌ها بسیار مفید است. 
+
 The more important goal of these case studies was to show how the streams API in asyncio makes it very easy to build socket-based applications.
+
+هدف مهم‌تری که از این موردپژوهی‌ها داشتیم نشان دادن این نکته بود که استفاده از streams API در برنامه‌نویسی همزمان چگونه می‌تواند ساخت یک برنامه‌ی مبتنی بر سوکت را بسیار آسان کند. 
 
 ## Twisted
 
