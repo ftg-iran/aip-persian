@@ -455,9 +455,15 @@ Instead, we need to decouple the receiving of messages from the sending of messa
 
 ### Case Study: Improving the Message Queue
 
+### موردپژوهی: بهبود صف پیام 
+
 In this case study, we improve the design of our toy message broker. The listener and sender programs remain as is. The specific improvement in the new broker design is to decouple sending and receiving messages; this will resolve the problem where a slow subscriber would also slow down receiving new messages, as discussed in the previous section. The new code, shown in Example 4-9, is a bit longer but not terribly so.
 
+در این موردپژوهی، طراحی واسط پیام آزمایشی خود را بهبود می‌دهیم. برنامه‌های فرستنده و شنونده بدون تغییر باقی می‌مانند. تغییر خاصی که برای طراحی واسط جدید در نظر داریم جداسازی ارسال و دریافت پیام‌ها است. انجام این کار همانطور که در بخش قبلی به آن پرداختیم می‌تواند مشکل مربوط به کند شدن دریافت پیام‌های جدید به خاطر مشترکین کند را برطرف کند. کد جدید که در مثال 6-4 نشان داده شده است تنها کمی طولانی‌تر است.
+
 ***Example 4-9. Message broker: improved design***
+
+***مثال 9-4. واسط پیام: طراحی بهبودیافته***
 
 ```python
 # mq_server_plus.py 
@@ -542,17 +548,53 @@ except KeyboardInterrupt:
 ```
 
 1. In the previous implementation, there were only SUBSCRIBERS; now there are SEND_QUEUES and CHAN_QUEUES as global collections. This is a consequence of completely decoupling the receiving and sending of data. SEND_QUEUES has one queue entry for each client connection: all data that must be sent to that client must be placed onto that queue. (If you peek ahead, the send_client() coroutine will pull data off SEND_QUEUES and send it.)
+
+1. در پیاده‌سازی قبلی، تنها SUBSCRIBERS را داشتیم، اکنون SEND_QUEUES و CHAN_QUEUES به عنوان مجموعه‌های سراسری وجود دارند. این مسئله نتیجه‌ی جداسازی کامل ارسال و دریافت داده است. SEND_QUEUES یک ورودی صف برای هر اتصال مشتری دارد: هر داده‌ای که قرار است به مشتری مورد نظر ارسال شود باید در این صف قرار گیرد. (اگر کمی جلوتر را بررسی کنید، روتین ()send_client داده‌ها را از SEND_QUEUES خارج کرده و ارسال می‌کند.)
+
 2. Up until this point in the client() coroutine function, the code is the same as in the simple server: the subscribed channel name is received, and we add the StreamWriter instance for the new client to the global SUBSCRIBERS collection.
+
+2. تا این مرحله در تابع روتین ()client، کد مربوطه با کد سرور ساده‌ای که داشتیم یکسان است: نام کانال برای اشتراک دریافت می‌شود و instance مربوط به StreamWriter برای مشتری جدید به مجموعه‌ی سراسری SUBSCRIBERS اضافه می‌شود. 
+
 3. This is new: we create a long-lived task that will do all the sending of data to this client. The task will run independently as a separate coroutine and will pull messages off the supplied queue, SEND_QUEUES[writer], for sending.
+
+3. قابلیت جدیدی که وجود دارد: یک تسک بلندمدت ایجاد می‌کنیم که تمام ارسال‌ داده‌ها به این مشتری را بر عهده خواهد داشت. این تسک به عنوان یک روتین کاملا جداگانه به صورت مستقل اجرا شده و پیام‌ها را از صف ارائه‌شده یا همان SEND_QUEUES[writer] جهت ارسال خارج می‌کند.  
+
 4. Now we’re inside the loop where we receive data. Remember that we always receive two messages: one for the destination channel name, and one for the data. We’re going to create a new, dedicated Queue for every destination channel, and that’s what CHAN_QUEUES is for: when any client wants to push data to a channel, we’re going to put that data onto the appropriate queue and then go immediately back to listening for more data. This approach decouples the distribution of messages from the receiving of messages from this client.
+
+4. اکنون در حلقه‌ای قرار داریم که جهت دریافت داده تعبیه شده است. به یاد داشته باشید که ما همیشه دو پیام دریافت می‌کنیم: یکی برای کانال هدف، و دیگری برای داده اصلی. یک صف جدید و اختصاصی برای هر کانال مقصد ایجاد کرده و آن را CHAN_QUEUES می‌نامیم: زمانی که هر یک از مشتریان می‌خواهد داده‌ای را به یک کانال ارسال کند،‌ ما آن داده را در صف مناسب قرار می‌دهیم و بلافاصله به گوش دادن برای داده‌های بیش‌تر بازمی‌گردیم. این رویکرد موجب جداسازی توزیع پیام‌ها از دریافت پیام‌ها از این مشتری می‌شود.
+
 5. If there isn’t already a queue for the target channel, make one.
+
+5. اگر از قبل صفی برای کانال هدف وجود ندارد صف جدیدی ایجاد کنید.
+
 6. Create a dedicated and long-lived task for that channel. The coroutine chan_sender() will be responsible for taking data off the channel queue and distributing that data to subscribers.
+
+6. یک تسک اختصاصی و بلندمدت برای آن کانال ایجاد کنید. روتین ()chan_sender مسئول برداشتن داده از صف کانال و توزیع آن به مشترکین خواهد بود. 
+
 7. Place the newly received data onto the specific channel’s queue. If the queue fills up, we’ll wait here until there is space for the new data. Waiting here means we won’t be reading any new data off the socket, which means that the client will have to wait on sending new data into the socket on its side. This isn’t necessarily a bad thing, since it communicates so-called back-pressure to this client. (Alternatively, you could choose to drop messages here if the use case is OK with that.)
+
+8. داده دریافتی جدید را به صف کانال مربوطه اضافه کنید. اگر صف پر شد، همینجا منتظر خواهیم ماند تا برای داده جدید فضای کافی ایجاد شود. انتظار در اینجا به معنای آن است که هیچ داده جدیدی از سوکت نخواهیم خواند. این بدان معناست که مشتری نیز باید در سمت خود برای ارسال داده جدید به سوکت منتظر بماند. این مسئله لزوما چیز بدی نیست، زیرا فشار برگشتی را به مشتری منتقل می‌کند. (با توجه به شرایط، می‌توانید پیام‌ها را در این نقطه حذف کنید.)
+
 8. When the connection is closed, it’s time to clean up. The long-lived task we created for sending data to this client, send_task, can be shut down by placing None onto its queue, SEND_QUEUES[writer] (check the code for send_client()). It’s important to use a value on the queue, rather than outright cancellation, because there may already be data on that queue and we want that data to be sent out before send_client() is ended.
+
+8. زمانی که اتصال بسته می‌شود زمان پاکسازی فرا رسیده است. می‌توانیم تسک بلندمدتی که برای ارسال داده به این مشتری ایجاد کرده‌بودیم (send_task) را با قرار دادن None در صفِ آن (SEND_QUEUES[writer]) متوقف کنیم. (()send_client را در کد بررسی کنید.) مهم است که به جای لغو کامل صف، مقداری را در آن قرار دهیم؛ زیرا ممکن است همچنان داده‌ای در صف وجود داشته باشد که بخواهیم پیش از پایان ()send_client ارسال شود. 
+
 9. Wait for that sender task to finish…
+
+9. صبر کنید تا کار فرستنده به پایان برسد...
+
 10. …then remove the entry in the SEND_QUEUES collection (and in the next line, we also remove the sock from the SUBSCRIBERS collection as before).
+
+10. ...سپس ورودی مجموعه‌ی SEND_QUEUES را حذف کنید(و در خط بعدی نیز همانند قبل سوکت را از مجموعه‌ی SUBSCRIBERS حذف می‌کنیم).
+
 11. The send_client() coroutine function is very nearly a textbook example of pulling work off a queue. Note how the coroutine will exit only if None is placed onto the queue. Note also how we suppress CancelledError inside the loop: this is because we want this task to be closed only by receiving a None on the queue. This way, all pending data on the queue can be sent out before shutdown.
+
+11. تابع روتین ()send_client تقریبا یک مثال کامل از جمع‌آوری کار از صف است. به خروج روتین تنها در شرایطی که در صف None باشد توجه کنید. همچنین توجه داشته باشید که چگونه CancelledError را داخل حلقه سرکوب می‌کنیم: این کار را بدین دلیل انجام می‌دهیم که می‌خواهیم تسک تنها در زمانی به پایان رسد که از صف None دریافت شود. بدین ترتیب، تمام داده‌های در حال انتظار در صف پیش از خاموشی ارسال می‌شوند.
+
 12. chan_sender() is the distribution logic for a channel: it sends data from a dedicated channel Queue instance to all the subscribers on that channel. But what happens if there are no subscribers for this channel yet? We’ll just wait a bit and try again. (Note, though, that the queue for this channel, CHAN_QUEUES[name], will keep filling up.)
+
+12. تابع ()chan_sender منطق توزیع برای یک کانال است: این تابع داده را از یک instance صف کانال اختصاصی به تمام مشترکین آن کانال ارسال می‌کند. اما در صورتی که هنوز مشترکی برای این کانال وجود نداشته باشد جه اتفاقی می‌افتد؟ فقط کمی صبر می‌کنیم و سپس دوباره تلاش می‌کنیم. (البته توجه داشته باشید که صف این کانال (CHAN_QUEUES[name]) به پر شدن ادامه خواهد داد.)
+
 13. As in our previous broker implementation, we do something special for channels whose name begins with /queue: we rotate the deque and send only to the first entry. This acts like a crude load-balancing system because each subscriber gets different messages off the same queue. For all other channels, all subscribers get all the messages.
 14. We’ll wait here for data on the queue, and exit if None is received. Currently, this isn’t triggered anywhere (so these chan_sender() coroutines live forever), but if logic were added to clean up these channel tasks after, say, some period of inactivity, that’s how it would be done.
 15. Data has been received, so it’s time to send to subscribers. We do not do the sending here: instead, we place the data onto each subscriber’s own send queue. This decoupling is necessary to make sure that a slow subscriber doesn’t slow down anyone else receiving data. And furthermore, if the subscriber is so slow that their send queue fills up, we don’t put that data on their queue; i.e., it is lost.
