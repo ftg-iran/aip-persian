@@ -623,13 +623,23 @@ The more important goal of these case studies was to show how the streams API in
 
 The **Twisted** project predates—dramatically—the asyncio standard library, and has been flying the flag of async programming in Python for around 14 years now. The project provides not only the basic building blocks, like an event loop, but also primitives like deferreds that are a bit like the futures in asyncio. The design of asyncio has been heavily influenced by Twisted and the extensive experience of its leaders and maintainers.
 
+پروژه‌ی **Twisted** به میزان قابل توجهی پیش از کتابخانه استاندارد asyncio ارائه شد و اکنون حدود 14 سال است که پرچم برنامه‌نویسی async در پایتون را در دست دارد. این پروژه نه تنها ابزارهای پایه مانند event loop  را ارائه می‌دهد، بلکه ابزارهای اولیه مانند deferredها که کمی به futures در asyncio شبیه هستند را نیز فراهم می‌کند. طراحی asyncio به میزان قابل توجهی از Twisted و تجربه بالای رهبران و نگهدارندگان آن الهام گرفته شده است.
+
 Note that **asyncio does not replace Twisted**. Twisted includes high-quality implementations of a huge number of internet protocols, including not only the usual HTTP but also XMPP, NNTP, IMAP, SSH, IRC, and FTP (both servers and clients). And the list goes on: DNS? Check. SMTP? Check. POP3? Check. The availability of these excellent internet protocol implementations continues to make Twisted compelling.
+
+توجه داشته باشید که **asyncio جایگزین Twisted نیست**. Twisted شامل پیاده‌سازی‌های بسیار باکیفیت از تعداد زیادی از پروتکل‌های اینترنتی از جمله HTTP، XMPP،‌ NNTP، IMAP، SSH، IRC، و FTP(هم سرور و هم کلاینت) است. این لیست همچنان ادامه دارد: DNS, SMTP, POP3. در دسترس بودن پیاده‌سازی این پروتکل‌های اینترنتی Twisted را جذاب‌ می‌کند.
 
 At the code level, the main difference between Twisted and asyncio, apart from history and historical context, is that for a long time Python lacked language support for coroutines, and this meant that Twisted and projects like it had to figure out ways of dealing with asynchronicity that worked with standard Python syntax.
 
+در سطح کد، تفاوت اصلی میان asyncio و Twisted جدا از زمینه‌ی تاریخی، این است که پایتون تا مدت زیادی فاقد پشتیبانی زبانی برای روتین‌ها بود، و این بدان معنا بود که Twisted و پروژه‌های مانند آن باید راه‌هایی برای مواجهه با ناسازگاری همزمانی و سینتکس پایتون یافت می‌کردند. 
+
 For most of Twisted’s history, callbacks were the means by which async programming was done, with all the nonlinear complexity that entails; however, when it became possible to use generators as makeshift coroutines, it suddenly became possible to lay out code in Twisted in a linear fashion using its @defer.inlineCallbacks decorator, as shown in **Example 4-10**.
 
+تا مدت زیادی از تاریخِ Twisted، ابزاری که برای برنامه‌نویسی همزمان مورد استفاده قرار می‌گرفت callbackها بودند که  پیچیدگی‌های غیرخطی به همراه داشتند. با این وجود، زمانی که استفاده از generatorها به عنوان روتین‌های موقت امکان‌پذیر شد، ناگهان امکان کدنویسی خطی در Twisted با استفاده از defer@ نیز فراهم شد. دکوراتور inlineCallback که در **مثال 10-4** نشان داده شده است. 
+
 ***Example 4-10. Even more Twisted with inlined callbacks***
+
+***مثال 10-4. Twisted با inline callbacks***
 
 ```python
 @defer.inlineCallbacks 
@@ -643,17 +653,33 @@ def my_coro_func():
 ```
 
 1. Ordinarily, Twisted requires creating instances of Deferred and adding callbacks to those instances as the method of constructing async programs. A few years ago, the `@inlineCallbacks` decorator was added, which repurposes generators as coroutines.
+
+1. به طور معمول، در Twisted برای ایجاد برنامه‌های همزمان، نیاز به ساخت instanceهایی از Deferred و اضافه کردن callbackها به این نمونه‌ها است. چند سال پیش، دکوراتور `inlineCallbacks@` اضافه شد که generatorها را به عنوان روتین‌ها مورد استفاده قرار می‌دهد. 
+
 2. While `@inlineCallbacks` did allow you to write code that was linear in appearance (unlike callbacks), some hacks were required, such as this call to `defer.returnValue()`, which is how you have to return values from @inlineCallbacks coroutines.
+
+2. در حالی که `inlineCallbacks@` برخلاف callbackها به شما اجازه‌ی نوشتن برنامه به صورت ظاهرا خطی را می‌داد، به ترفندهایی نیز نیاز پیدا می‌کردید، مثلا صدا زدن `()defer.returnValue`، که روشی برای برگشت مقادیر از روتین‌های `inlineCallbacks@` است.  
+
 3. Here we can see the yield that makes this function a generator. For `@inlineCallbacks` to work, there must be at least one yield present in the function being decorated.
+
+3. در اینجا می‌توانیم yield را مشاهده کنیم که این تابع را به یک generator تبدیل می‌کند. برای آنکه `inlineCallbacks@` کار کند، حداقل باید یک yield در تابعی که دکوراتور را برای آن استفاده می‌کنیم به کار گرفته شود. 
 
 
 Since native coroutines appeared in Python 3.5, the Twisted team (and Amber Brown in particular) have been working to add support for running Twisted on the asyncio event loop.
 
+از زمانی که روتین‌های اصلی در پایتون 3.5 اضافه شدند، تیم Twisted (و به خصوص Amber Brown) در حال کار برای اضافه کردن پشتیبانی اجرای Twisted در حلقه‌ی رویداد asyncio بوده‌اند.
+
 This is an ongoing effort, and my goal in this section is not to convince you to create all your applications as Twisted-asyncio hybrids, but rather to make you aware that work is currently being done to provide significant interoperability between the two.
+
+این یک تلاش مداوم است، و هدف من در این بخش قانع کردن شما برای استفاده از Twisted و asyncio به طور ترکیبی در برنامه‌هایتان نیست. بلکه هدف من آگاه‌ کردن شما از کارهای مهمی است که در حال حاضر برای ایجاد قابلیت همکاری میان این دو انجام می‌شود.
 
 For those of you with experience using Twisted, **Example 4-11** might be jarring.
 
+برای کسانی که تجربه‌ی کار با Twisted را دارند، **مثال 11-4** می‌تواند ناراحت‌کننده باشد.
+
 ***Example 4-11. Support for asyncio in Twisted***
+
+***مثال 11-4. پشتیبانی از asyncio در Twisted***
 
 ```python
 # twisted_asyncio.py 
