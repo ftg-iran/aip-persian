@@ -1,44 +1,38 @@
-# Appendix A - A Short History of Async Support in Python
+# پیوست A - یک تاریخچه کوتاه از پشتیبانی async در پایتون
 
-Despite having been part of the Python standard library for a long time, the asyncore
-module suffers from fundamental flaws following from an inflexible API that does not
-stand up to the expectations of a modern asynchronous networking module.
-Moreover, its approach is too simplistic to provide developers with all the tools they
-need in order to fully exploit the potential of asynchronous networking.
-The most popular solution right now used in production involves the use of third-
-party libraries. These often provide satisfactory solutions, but there is a lack of compat‐
-ibility between these libraries, which tends to make codebases very tightly coupled to
-the library they use.
+باوجود اینکه asyncore برای مدت زیادی بخشی از کتابخانه استاندارد پایتون بوده، ماژول asyncore
+به دنبال یک API غیر قابل انعطاف انتظارات یک ماژول ناهمگام مدرن را برآورده نمی‌کرد، رنج می برد.
+علاوه بر این، رویکرد آن بسیار ساده تر از آن بود که توسعه دهندگان را با تمام ابزار هایی که
+بهره‌برداری کامل از پتانسیل شبکه‌های ناهمگام نیاز دارند را ارائه دهد.
+محبوب ترین راه حلی که در حال حاضر در تولید استفاده می شود، استفاده از کتابخانه های شخص ثالث است. اینها
+اغلب راه‌حل‌های رضایت‌بخشی را ارائه می‌دهند، اما عدم سازگاری بین این کتابخانه‌ها وجود دارد، که باعث
+می‌شود کدبیس های بسیار پایدار با کتابخانه ای که استفاده میشود، جفت شود.
 
-> - Laurens van Houtven, [PEP 3153 (May 2011): Asynchronous IO Support](https://oreil.ly/pNyro)
+> - لورنس وان هاوتون [PEP 3153 (می 2011): پشتیبانی ناهمگام IO](https://peps.python.org/pep-3153/)
 
-The goal of this appendix is to describe a little of the history behind async program‐
-ming in Python, and the point I want to make—which still amazes me when I think
-about it—is that the key innovation that we’ve been awaiting for 20 years was lan‐
-guage syntax.
-Many people will be surprised by this, but Asyncio is not the first attempt that has
-been made to add support for asynchronous network programming to Python, as is
-discussed next.
+هدف این ضمیمه توصیف کمی از تاریخچه برنامه‌نویسی async در پایتون است، و نکته‌ای که می‌خواهم به آن اشاره کنم
+– که هنوز وقتی به آن فکر می‌کنم مرا شگفت‌زده می‌کند – این است که نوآوری کلیدی که ما ۲۰ سال منتظر آن
+بودیم، سینتکس زبان بود.
+بسیاری از مردم از این موضوع شگفت زده خواهند شد، اما Asyncio اولین تلاشی نیست که برای افزودن پشتیبانی از
+برنامه نویسی شبکه ناهمگام به پایتون انجام شده است، همانطور که در ادامه بحث می شود.
 
+## در ابتدا asyncore وجود داشت
 
-## In the Beginning, There Was asyncore
+[در مقایسه با asyncore] Twisted تقریبا از هر جهت بهتر است. قابل حمل‌تر، جذابتر، ساده تر
+مقیاس پذیرتر، توسعه پذیرتر، مستندات بهتر است و میتواند املت خوشمزه ای هم درست کند. Asyncore،
+برای همه مقاصد، منسوخ شده است.
 
-Compared to asyncore,] Twisted is better in pretty much every possible way. It’s more
-portable, more featureful, simpler, more scalable, better maintained, better docu‐
-mented, and it can make a delicious omelette. Asyncore is, for all intents and purposes,
-obsolete.
+> —Glyph ca. در سال ۲۰۱۰ در [Stack Overflow](https://stackoverflow.com/questions/4384360/which-python-async-library-would-be-best-suited-for-my-code-asyncore-twisted/4385667#4385667)
 
-> —Glyph ca. 2010 on [Stack Overflow](https://oreil.ly/4pEeJ)
+<div dir="rtl">
+asyncore باید به عنوان مصون تاریخی در نظر گرفته شود و هرگز از آن استفاده نشود.
+</div>
 
-asyncore should really be considered a historical artifact and never actually used.
+> —Jean-Paul Calderone ca. در ۲۰۱۳ در [Stack Overflow](https://stackoverflow.com/questions/14698020/java-nio-server-and-python-asyncore-client/14711854#14711854)
 
-> —Jean-Paul Calderone ca. 2013 on [Stack Overflow](https://oreil.ly/oWGEZ)
-
-Support for so-called asynchronous features was added to Python a long time ago, in
-the asyncore module. As you can tell from the preceding quotes, reception of asyn
-core was lukewarm, and usage low. What is jaw-dropping, to this author at least, is
-when this module was added: in Python 1.5.2! This is what it says at the top of Lib/
-asyncore.py in the CPython source:
+پشتیبانی از ویژگی های به اصطلاح ناهمگام مدت ها پیش در ماژول asyncore به پایتون اضافه شد.
+همانطور که از نقل قول های قبلی می توانید متوجه شوید، بازخورد نسبت به asyncore کم بود. چیزی که برای این نویسنده جذاب است، 
+زمانی که این ماژول به پایتون ۱.۵.۲ اضافه شد، این همان چیزی است که بالای فایل Lib/asyncore.py در CPython نوشته شده است:
 
 ```python
 # -*- Mode: Python -*-
@@ -48,68 +42,63 @@ asyncore.py in the CPython source:
 # Copyright 1996 by Sam Rushing
 ```
 
-Furthermore, the first paragraph of the Python [documentation for asyncore](https://oreil.ly/tPp8_) says the
-following, which could easily appear in today’s documentation for asyncio:
+علاوه بر این، پاراگراف اول [مستندات پایتون برای asyncore](https://docs.python.org/3/library/asyncore.html) موارد زیر را بیان می کند، که می تواند به در مستندات حال حاضر asyncio هم هست:
 
-> This module provides the basic infrastructure for writing asynchronous socket service
-clients and servers.
-There are only two ways to have a program on a single processor do “more than one
-thing at a time.” Multithreaded programming is the simplest and most popular way to
-do it, but there is another very different technique, that lets you have nearly all the
-advantages of multithreading, without actually using multiple threads. It’s really only
-practical if your program is largely I/O bound. If your program is processor bound,
-then preemptive scheduled threads are probably what you really need. Network servers
-are rarely processor bound, however.
+> این ماژول زیرساخت اولیه را برای نوشتن سرویس سوکت ناهمگام فراهم می کند.
 
-​1996, huh? Clearly it was already possible to manage multiple socket events in a single
-thread in Python back then (and, in fact, much earlier than this in other languages).
-So what has changed in the past quarter-century that makes Asyncio special now?
-The answer is language syntax. We’re going to be looking at this more closely in the
-next section, but before closing out this window into the past, it’s worth noting a
-small detail that appeared in the Python 3.6 docs for asyncore (ca. December 2016):
+.کلاینت ها و سرور ها
+
+تنها دوراه برای داشتن یک برنامه در یک پردازنده وجود دارد که **بیشتر از یک کار واحد را انجام دهد**.
+برنامه نویسی چند‌رشته راحترین و ساده‌ترین راه است؛ ولی تکنیک متفاوت دیگری وجود دارد که به شما
+امکان داشتن تقریبا تمام مزایای چند رشته ای بدون استفاده از چند ترد را داشته باشید. این زمانی عملی است
+که برنامه شما تا حد زیادی به I/O محدود باشد. اگر برنامه شما یک برنامه اگر برنامه شما به پردازنده محدود است،
+رشته های برنامه ریزی شده انحصاری(__preemptive scheduled threads__) همان چیزی که نیاز دارید. با اینحال
+سرور های شبکه به ندرت به پردازنده محدود می‌شوند.
+
+<div dir="rtl">
+
+۱۹۹۶، بله؟ واضح است که در آن زمان مدیریت همزمان چند ایونت به صورت تک رشته ای در پایتون وجود داشت.
+(درواقع قبلتر از زبان های دیگر وجود داشت.) پس چه چیزی در یک ربع قرن گذشته تغییر کرده است که Asyncio اکنون خاص است؟
+پاسخ سینتکس زبان است. ما دربخش بعدی این موضوع را بررسی خواهیم کرد، اما قبل از رد شدن از موضوع، ارزشش را دارد که
+به جزئیات کوچکی از مستندات پایتون ۳.۶ توجه کنیم(حدودا دسامبر ۲۰۱۶):
+
+</div>
 
 > Source code: Lib/asyncore.py
-Deprecated since version 3.6: Please use asyncio instead.
 
-## The Path to Native Coroutines
+تا نسخه ۳.۶ منسوخ می‌شود. لطفا بجای آن از asyncio استفاده کنید.
 
-Recall that I’m using the term Asyncio to refer to both the Python language syntax
-changes, and the new asyncio module in the standard library.1 Let’s dig into that dis‐
-tinction a little more.
-Today, support for asynchronous programming in Python has three distinct compo‐
-nents, and it’s interesting to consider when they were added:
+## مسیر کروتین های بومی
 
-*Language syntax: generators*
+به یاد داشته باشید که من از اصطلاح Asyncio برای اشاره به تغییرات سینتکس پایتون و ماژول
+جدید asyncio در کتابخانه استاندارد اشاره کردم. اجازه دهید بیشتر به این تمایز بپردازیم.
+امروزه پشتیبانی از برنامه نویسی ناهمگان دارای سه مولفه مجزا است و جالب است بدانیم که چه زمانی آنها اضافه شدند:
 
-> Keyword yield, added in Python 2.2 (2001) in [PEP 255](https://oreil.ly/35Czp) and enhanced in Python
-2.5 (2005) in [PEP 342](https://oreil.ly/UDWl) with the send() and throw() methods on generator
-objects, which allowed generators to be used as coroutines for the first time.
-Keyword yield from, added in Python 3.3 (2009) in [PEP 380](https://oreil.ly/38jVG) to make it much
-easier to work with nested yields of generators, particularly in the case where gen‐
-erators are being used as makeshift (i.e., temporary) coroutines.
+*سینتکس زبان: generator ها*
 
-*Language syntax: coroutines*
+> کلمه کلیدی yeild به پایتون ۲.۲(۲۰۰۱)  در [PEP 255](https://peps.python.org/pep-0255/) اضافه شد.
 
-> Keywords async and await, added in Python 3.5 (2015) in [PEP 492](https://oreil.ly/XJUmS), which gave
-first-class support to coroutines as a language feature in their own right. This also
-means that generators can again be used as generators, even inside coroutine
-functions.
+در نسخه ۲.۵(۲۰۰۵) در [PEP 342](https://peps.python.org/pep-0342/) با متود های send() و throw() بر
+روی آبجکت های generator که اجازه میداد generator ها برای اولین بار به عنوان کروتین استفاده شوند.
+کلمه کلیدی yeild از پایتون ۳.۳(۲۰۰۹) در [PEP 380](https://peps.python.org/pep-0380) برای راحتر کردن
+کار با yeild های تودرتو در generator ها اضافه شد. به ویژه در مواردی که generator ها به عنوان کروتین موقت(به عنوان مثال temporary) استفاده می‌شود.
 
-*Library module: asyncio*
+*سینتکس زبان: (کروتین)coroutines*
 
-> Added in Python 3.4 (2012) in [PEP 3156](https://oreil.ly/QKG4m), providing batteries-included support
-for both framework designers and end-user developers to work with coroutines
-and perform network I/O. Crucially, the design of the event loop in asyncio was
-intended to provide a common base upon which other existing third-party
-frameworks like Tornado and Twisted could standardize.
+> کلمه کلیدی async و await در پایتون ۳.۵(۲۰۱۵) در [PEP 492](https://peps.python.org/pep-0492) اضافه شد.
 
-These three are quite distinct from each other, although you could be forgiven confu‐
-sion since the history of the development of these features in Python has been diffi‐
-cult to follow.
-The impact of new syntax for async and await is significant, and it’s having an effect
-on other programming languages too, like JavaScript, C#, Scala, Kotlin, and Dart.
-It took a long time and a lot of thinking by the thousands of programmers involved in
-the Python project to get us to this point.
+که به خودی خود از کوروتین ها به عنوان یک ویژگی زبان پشتیبانی کلاس-اول می کرد
+. این همچنین به این معنی است که generator ها می توانند دوباره به عنوان generator حتی در داخل توابع کوروتین استفاده شوند.
 
+*ماژول کتابخانه: asyncio*
 
+> در پایتون ۳.۴(۲۰۱۲) در [PEP 3156](https://peps.python.org/pep-3156) برای ارائه پشتیبانی کامل اضافه شد.
 
+هم برای طراحان فریمورک و هم برای کاربران نهایی کار با کروتین ها و انجام دادن I/O شبکه
+طراحی حلقه ایونت در asyncio در نظر گرفته شده بود تا یک پایگاه مشترک فراهم کند که
+براساس آن بتوان فریمورک های شخص ثالثی مثل Tornado و Twisted استاندارد سازی شود.
+
+این سه از هم قابل تمایز هستند. اگرچه ممکن است باعث سردرگمی شما شود زیرا دنبال کردن تاریخچه توسعه این ویژگی ها در پایتون،
+سخت بوده است.
+اثر گذاری سینتکس جدید async و await قابل توجه است و بر سایر زبان های برنامه نویسی نیز مانند جاوا اسکریپت، سی شارپ، اسکالا، کاتلین
+و دارت تأثیر می گذارد. زمان زیادی طول کشید و هزاران برنامه نویس درگیر در پروژه پایتون فکر کردند تا ما به این نقطه برسیم.

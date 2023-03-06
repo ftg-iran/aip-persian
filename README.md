@@ -20,7 +20,7 @@
 | | [@sadult](https://github.com/sadult) | 03 - Asyncio Walk-Through |
 | | [@FatemeFouladkar](https://github.com/FatemeFouladkar) | 04 Asyncio Libraries You Aren’t Using |
 | | [@mehrawbmh](https://github.com/mehrawbmh) | 05 Concluding Thoughts |
-| | [@mmdbalkhi](https://github.com/mmdbalkhi) | Appendix A-A Short History of Async Support in Python |
+| ۱۵ اسفند ۱۴۰۱ | [@mmdbalkhi](https://github.com/mmdbalkhi) | Appendix A-A Short History of Async Support in Python |
 | | [@mmdbalkhi](https://github.com/mmdbalkhi) | Appendix B-Supplementary Material |
 
 </div>
