@@ -1,28 +1,6 @@
-# Chapter 5 - Concluding Thoughts
+# فصل 5 - نتیجه گیری نهایی
 
-When substantial new features appear in Python, they’re new for everybody. I have
-nearly two decades’ experience with Python, but I still found Asyncio difficult to
-learn—even taking into account that I had already worked with Twisted and Tornado
-on previous projects, so event-based programming was not new to me. I found the
-asyncio API to be much more complex than I had expected. Part of this was due to a
-lack of high-level documentation.
-Now, having spent the time to learn how to use Asyncio in Python, I feel a lot more
-comfortable with it, and this progression will likely be similar for you too. There is a
-coherent structure and purpose behind the design of the API, and hopefully this book
-will make it much easier for you to learn than it was for me. With a basic understand‐
-ing in place, I’m now finding it quite easy to write new Asyncio-based code without
-having to constantly refer back to the docs: this is a very good sign, and certainly isn’t
-the case with all the standard library modules.
-There are still some rough edges, though. The asyncio standard library will continue
-to have a large, fine-grained API, since it caters to both framework designers and
-end-user developers. This means that we—as end-user developers—will have to learn
-which parts of the API are applicable to us and which are not. In time, as the third-
-party library ecosystem for asyncio grows and matures, we will likely find ourselves
-working with those library APIs rather than the raw asyncio standard library API.
-Existing libraries like aiohttp and Sanic are good examples of this. The asyncio API
-itself will also continue to improve as more people gain experience with it.
-I also made unexpected discoveries along the way: by happy coincidence, it turned
-out that I needed to finally learn ZeroMQ at around the same time this book was
-being written, and I’m finding that asyncio in combination with pyzmq makes net‐
-work programming a joy. My recommendation for the best way to learn Asyncio is to
-experiment, try things out and have fun.
+وقتی ویژگی های اساسی جدید در پایتون ظهور پیدا میکنند، آن ها برای همه جدید هستند. من نزدیک دو دهه تجربۀ کار با پایتون دارم؛ اما هنوز هم کتابخانه asyncio را سخت برای یادگیری میدانم. در نظر بگیرید که من با کتابخانه های Twisted و Tornado هم در پروژه های قبلی کار کرده ام، پس برنامه نویسی رویداد محور  برای من تازگی نداشت. برای من، رابط برنامه API کتابخانۀ asyncio خیلی پیچیده تر از چیزی بود که انتظار داشتم. بخشی از این بخاطر عدم وجود مستند های سطح بالا ایجاد شده بود.
+حالا با گذاشتن زمان برای یادگرفتن نحوه استفاده از این کتابخانه در پایتون، بسیار احساس راحت تری با آن دارم و این فرآیند احتمال دارد برای شما هم مشابه باشد. یک ساختار منسجم و یک هدف پشت طراحی API قرار دارد و امیدوارم که این کتاب امر یادگیری را برای شما بسیار آسان تر از چیزی کند که برای من وجود داشت. با یک فهم پایه ای در مورد موضوع، حالا نوشتن کد های با این کتابخانه برای من کاملا راحت شده است؛ بدون نیاز به برگشتن به مستندات به صورت مداوم. این نشانۀ خوبی است که و قطعا برای همه ماژول های کتابخانه ها چنین چیزی رخ نمیدهد. اگر چه هنوز چند مشکل کوچک وجود دارد.
+کتابخانۀ استاندارد asyncio به داشتن یک API بزرگ که به خوبی تقسیم بندی شده است ادامه خواهد داد؛ از آنجا که باید نیاز هر دو گروه کاربر نهایی و طراح چارچوب framework را تأمین کند. این بدین معناست که ما به عنوان یک توسعه دهنده (کاربر نهایی) باید بدانیم که کدام بخش های کتابخانه برای ما کاربردی است و کدام خیر. با گذر زمان که کتابخانه های شخص ثالث برای asyncio رشد میکنند و بالغ میشوند، ما احتمالا خودمان را در حال کار با آن API ها خواهیم یافت به جای استفاده از کتابخانه خام asyncio. کتابخانه های موجود مانند aiohttp, Sanic نمونه های خوبی برای این موضوع هستند. همچنین با بیشتر شدن تجربه کار کاربران، خود asyncio هم به بهبود ادامه خواهد داد. 
+من همچنین کشف های غیرمنتظره ای طی این مسیر کرده ام: با خوش شانسی، معلوم شد که نیاز است من همزمان با نوشتن این کتاب ZeroMQ هم یاد بگیرم و به این پی برده ام که ترکیب این دو کتابخانه با هم، برنامه نویسی شبکه را تبدیل به امری لذت بخش کرده است. پیشنهاد من برای بهترین روش یادگیری asyncio این است که تجربه کنید، چیزهای مختلف را امتحان کنید و خوش بگذرانید!
