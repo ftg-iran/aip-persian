@@ -698,13 +698,32 @@ reactor.run()
 ```
 
 1. This is how you tell Twisted to use the `asyncio` event loop as its main reactor. Note that this line must come before the reactor is imported from `twisted.internet` on the following line.
+
+1. این روشی است که با استفاده از آن به Twisted می‌گویید که از حلقه‌ی رویداد `asyncio` به عنوان reactor اصلی خود استفاده کند. توجه داشته باشید که این خط باید پیش از import کردن reactor از `twisted.internet` در خط بعدی بیاید. 
+
 2. Anyone familiar with Twisted programming will recognize these imports. We don’t have space to cover them in depth here, but in a nutshell, the `reactor` is the `Twisted` version of the `asyncio` loop, and `defer` and `task` are namespaces for tools to work with scheduling coroutines.
+
+2. هر کسی که با برنامه‌نویسی Twisted آشنا باشد این importها را خواهد شناخت. ما در اینجا فضایی برای پوشش عمیق این مبحث نداریم، اما به طور خلاصه، reactor یک ورژن از حلقه‌ی `asyncio` در `Twisted` است، و `defer` و `task` در واقع namespaceهایی برای ابزارهای مربوط به روتین‌های زمانبندی هستند. 
+
 3. Seeing `async def` here, in a Twisted program, looks odd, but this is indeed what the new support for `async/await` gives us: the ability to use native coroutines directly in Twisted programs.
+
+3. مشاهده‌ی `async def` در یک برنامه‌ی Twisted عجیب است. اما این همان چیزی است که پشتیبانیِ جدید `async/await` در اختیار ما قرار می‌دهد: قابلیت استفاده از روتین‌های اصلی به طور مستقیم در برنامه‌های Twisted. 
+
 4. In the older `@inlineCallbacks` world, you would have used yield from here, but now we can use await, the same as in `asyncio` code. The other part of this line, `deferLater()`, is an alternative way to do the same thing as `asyncio.sleep(1)`. We await a future where, after one second, a do-nothing callback will fire.
+
+4. در دنیای قدیمی‌تر `inlineCallbacks@`، از اینجا از yield استفاده می‌کردید، اما حال می‌توانیم مانند چیزی که در کد `asyncio` داشتیم از await استفاده کنیم. بخش دیگر این خط، `()deferLater`، روشی جایگزین برای انجام همان کاری است که `asyncio.sleep(1)` انجام می‌دهد. ما منتظر آینده‌ای هستیم که در آن پس از گذشت 1 ثانیه، یک callback بدون هیچ محتوایی اجرا می‌شود. 
+
 5. `ensureDeferred()` is a Twisted version of scheduling a coroutine. This would be analogous to `loop.create_task()` or `asyncio.ensure_future()`.
+
+5. تابع `()ensureDeferred` نسخه‌ی Twisted برای زمانبندی روتین‌ها است. مشابه همان کاری که `()loop.create_task` یا `()asyncio.ensure_future` انجام مي‌دادند. 
+
 6. Running the reactor is the same as `loop.run_forever()` in asyncio.
 
+6. اجرا کردن reactor مانند `()loop.run_forever` در asyncio است. 
+
 Running this script produces the following output:
+
+اجرا کردن این قطعه کد خروجی زیر را تولید می‌کند:
 
 ```bash
 $ twisted_asyncio.py
@@ -717,7 +736,11 @@ Mon Oct 16 16:19:53 2019 Hello 4
 
 There’s much more to learn about Twisted. In particular, it’s well worth your time to go through the list of networking protocols it implements. There is still some work to be done, but the future looks very bright for interoperation between Twisted and asyncio.
 
+مباحث زیادی برای یادگیری درباره Twisted وجود دارد. به طور خاص، مرور پیاده‌سازی‌های پروتکل‌های شبکه ارزش وقت شما را خواهند داشت. هنوز کارهای زیادی وجود دارند، اما آینده برای همکاری میان Twisted و asyncio بسیار روشن به نظر می‌رسد. 
+
 asyncio has been designed in such a way that we can look forward to a future where it will be possible to incorporate code from many async frameworks, such as Twisted and Tornado, into a single application, with all code running on the same event loop.
+
+خوشبختانه asyncio به گونه‌ای طراحی شده است که می‌توانیم انتظار آینده‌ای را داشته باشیم که در آن امکان ترکیب کدهای بسیاری از فریمورک‌های async از جمله Twisted و Tornado در یک برنامه‌ی واحد، در حالی که همه کدها در یک حلقه‌ی رویداد اجرا می‌شوند وجود داشته باشد. 
 
 ## The Janus Queue
 
