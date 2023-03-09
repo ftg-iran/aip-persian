@@ -744,20 +744,32 @@ asyncio has been designed in such a way that we can look forward to a future whe
 
 ## The Janus Queue
 
+## صف Janus
+
 The Janus queue (installed with `pip install janus`) provides a solution for communication between threads and coroutines. In the Python standard library, there are two kinds of queues:
+
+صف Janus (که با `pip install janus` نصب می‌شود) راه حلی برای ارتباط میان رشته‌ها (threads) و روتین‌ها ارائه می‌دهد. در کتابخانه استاندارد پایتون، دو نوع صف وجود دارد:
 
 `queue.Queue`
 
 - A blocking queue, commonly used for communication and buffering between threads
 
+- یک صف مسدودکننده که معمولا برای ارتباط و بافر کردن میان رشته‌ها استفاده می‌شود.
+
 `asyncio.Queue`
 
 - An async-compatible queue, commonly used for communication and buffering between coroutines
 
+- یک صف سازگار با برنامه‌نویسی همزمان، که معمولا برای ارتباط و بافر کردن میان میان روتین‌ها استفاده می‌شود.
+
 Unfortunately, neither is useful for communication between threads and coroutines! This is where Janus comes in: it is a single queue that exposes both APIs, a blocking one and an async one. Example 4-12 generates data from inside a thread, places that data on a queue, and then consumes that data from a coroutine.
+
+متاسفانه، هیچ یک از این دو برای ارتباط میان رشته‌ها و روتین‌ها مفید نیستند! اینجاست که Janus وارد می‌شود: Janus یک صف است که هر دو API را نمایش می‌دهد، یک API مسدودکننده و یک API همزمان. مثال 12-4 از داخل یک رشته داده تولید کرده و آن را در یک صف قرار می‌دهد، و سپس آن داده‌ها را از یک روتین مصرف می‌کند. 
 
 ***Example 4-12. Connecting coroutines and threads with a Janus queue***
 
+***مثال 12-4. متصل کردن رشته‌ها و روتین‌ها با صف Janus
+***
 ```python
 # janus_demo.py 
 import asyncio 
@@ -784,12 +796,28 @@ asyncio.run(main())
 ```
 
 1. Create a Janus queue. Note that just like an asyncio.Queue, the Janus queue will be associated with a specific event loop. As usual, if you don’t provide the loop parameter, the standard `get_event_loop()` call will be used internally.
+
+1. یک صف Janus بسازید. توجه داشته باید که دقیقا مانند asyncio.Queue، صف Janus با یک حلقه رویداد خاص مرتبط خواهد بود. اگر پارامتر حلقه را ارائه نکنید، فراخوانی استاندارد `()get_event_loop` به صورت داخلی استفاده خواهد شد. 
+
 2. Our `main()` coroutine function simply waits for data on a queue. This line will suspend until there is data, exactly until there is data, exactly like calling `get()` on an `asyncio.Queue` instance. The queue object has two faces: this one is called `async_q` and provides the async-compatible queue API.
+
+2. تابع روتین `()main` ما منتظر داده در یک صف است. این خط دقیقا تا زمانی که داده وجود داشته باشد معلق می‌ماند، دقیقا مانند فراخوانی `()get` بر روی یک instance از `asyncio.Queue`. شئ صف دو چهره دارد: این `async_q` نام دارد و API صف سازگار با async را ارائه می‌دهد.
+
 3. Print a message.
+
+3. یک پیام چاپ کنید.
+
 4. Inside the `data_source()` function, a random int is generated, which is used both as a sleep duration and a data value. Note that the `time.sleep()` call is blocking, so this function must be executed in a thread.
+
+4. داخل تابع ()data_source، یک عدد تصادفی تولید می‌شود، که هم به عنوان مدت زمان خواب و هم به عنوان مقدار داده استفاده می‌شود. توجه داشته باشید که فراخوانی ()time.sleep برنامه را مسدود می‌کند، پس این تابع باید در یک رشته اجرا شود.
+
 5. Place the data onto the Janus queue. This shows the other face of the Janus queue: `sync_q`, which provides the standard, blocking `Queue` API.
 
+5. داده را در صف Janus قرار دهید. این خط چهره‌های دیگر صف Janus را نشان می‌دهد: `sync_q`، که API استاندارد و مسدودکننده `Queue` را ارائه می‌دهد. 
+
 Here’s the output:
+
+خروجی بدین شکل است:
 
 ```bash
 $ <name> 
@@ -808,15 +836,26 @@ Done.
 
 If you can, it’s better to aim for having short executor jobs, and in these cases, a queue (for communication) won’t be necessary. This isn’t always possible, though, and in such situations, the Janus queue can be the most convenient solution to buffer and distribute data between threads and coroutines.
 
+
+اگر می‌توانید، بهتر است برای داشتن کارهای اجرایی کوتاه‌مدت هدف‌گذاری کنید، و در چنین شرایطی، به صف (برای ارتباط) نیازی نخواهد بود. با این حال، این کار همیشه ممکن نیست، و در چنین شرایطی، صف Janus می‌تواند مناسب‌ترین راه برای توزیع و پوشش داده میان رشته‌ها و روتین‌ها باشد. 
 ## aiohttp
 
 aiohttp brings all things HTTP to asyncio, including support for HTTP clients and servers, as well as WebSocket support. Let’s jump straight into code examples, starting with simplicity itself: “Hello World.”
 
+<p dir="rtl"> aiohttp تمام موارد مربوط به HTTP را به asyncio می‌آورد؛ از جمله پشتیبانی از سرویس‌گیرندگان و سرورهای HTTP، و همچنین پشتیبانی از WebSocket. بیاید مستقیما به نمونه‌های کد بپردازیم، و با نمونه‌ای بسیار ساده شروع کنیم: "Hello World."</p>
+
 ### Case Study: Hello World
+### موردپژوهی: Hello World
+
 
 **Example 4-13** shows a minimal web server using aiohttp.
 
+**مثال 13-4*** یک وب سرور ساده و کوچک با استفاده از aiohttp را نشان می‌دهد.
+
 ***Example 4-13. Minimal aiohttp example***
+
+***مثال 13-4. مثالی ساده و کوچک از aiohttp***
+
 
 ```python
 from aiohttp import web 
@@ -833,27 +872,59 @@ web.run_app(app, port=8080)
 2. A route is created, with the target coroutine `hello()` given as the handler.
 3. The web application is run.
 
+1. یک instance از `Application` ساخته می‌شود.
+2. یک route ساخته می‌شود، که روتین هدف `()hello` به عنوان handler به آن داده می‌شود. 
+3. وب اپلیکیشن اجرا می‌شود. 
+ 
 Observe that there is no mention of loops, tasks, or futures in this code: the developers of the aiohttp framework have hidden all that away from us, leaving a very clean API. This is going to be common in most frameworks that build on top of asyncio, which has been designed to allow framework designers to choose only the bits they need, and encapsulate them in their preferred API.
+
+مشاهده می‌شود که هیچ اشاره‌ای به حلقه‌ها، تسک‌ها، و یا futureها در این کد نشده است. توسعه‌دهندگان aiohttp تمام این موارد را از ما پنهان کرده‌ و یک API بسیار تمیز باقی گذاشته‌اند. این کار در بسیاری از فریمورک‌هایی که بر روی asyncio ساخته می‌شوند بسیار رایج است، که به طراحان فریمورک‌ها اجاره می‌دهد که تنها بخش‌هایی را که به آن‌ها نیاز دارند انتخاب کرده و آن‌ها را در API ترجیحی خود محصور کنند. 
 
 ### Case Study: Scraping the News
 
+### موردپژوهی: استخراج اخبار
+
 aiohttp can be used both as a server and a client library, like the very popular (but blocking!) `requests` library. I wanted to showcase aiohttp by using an example that incorporates both features.
+
+کتابخانه aiphttp می‌تواند هم به  عنوان یک سرور و هم به عنوان یک کتابخانه سرویس‌گیرنده مورد استفاده قرار گیرد، دقیقا همانند کتابخانه‌ بسیار محبوب (و البته مسدودکننده) `requests`. 
 
 In this case study, we’ll implement a website that does web scraping behind the scenes. The application will scrape two news websites and combine the headlines into one page of results. Here is the strategy:
 
+در این موردپژوهی،وبسایتی را طراحی خواهیم کرد که در پشت صحنه به web scraping مشغول است. این برنامه دو سایت خبری را scrape کرده و عناوین خبری را در یک صفحه نتایج ترکیب می‌کند. استراتژی ما بدین صورت است:
+
 1. A browser client makes a web request to http://localhost:8080/news.
+
+1. یک مرورگر کلاینت درخواستی به http://localhost:8080/news. ارسال می‌کند
+
 2. Our web server receives the request, and then on the backend fetches HTML data from multiple news websites.
+
+2. وب سرور ما درخواست را دریافت می‌کند، و سپس بکند داده‌ی HTML را از چندین وبسایت خبری دریافت می‌کند. 
+
 3. Each page’s data is scraped for headlines.
+
+3. داده‌ی هر صفحه برای به دست آوردن تیترهای خبری scrape می‌شود.
+
 4. The headlines are sorted and formatted into the response HTML that we send back to the browser client.
 
+4. تیترهای خبری به شکل پاسخ HTML که به مرورگر کلاینت ارسال می‌کنیم قالب‌بندی و مرتب می‌شوند. 
+
 **Figure 4-1** shows the output.
+
+**شکل 1-4** خروجی را نشان می‌دهد.
 
 ![Figure 4-1. The final product of our news scraper: headlines from CNN are shown in one color, and Al Jazeera in another](images/uaip_0401.png)
 Figure 4-1. The final product of our news scraper: headlines from CNN are shown in one color, and Al Jazeera in another
 
+![شکل 1-4. نتیجه نهایی استخراج اخبار: تیترهای خبری از CNN به یک رنگ، و تیترهای AI Jazeera به رنگی دیگر نمایش داده می‌شوند.](images/uaip_0401.png)
+شکل 1-4. نتیجه نهایی استخراج اخبار: تیترهای خبری از CNN به یک رنگ، و تیترهای AI Jazeera به رنگی دیگر نمایش داده می‌شوند.
+
 Web scraping has become quite difficult nowadays. For example, if you try `requests.get('http://edition.cnn.com')`, you’re going to find that the response contains very little usable data! It has become increasingly necessary to be able to execute JavaScript locally in order to obtain data, because many sites use JavaScript to load their actual content. The process of executing such JavaScript to produce the final, complete HTML output is called rendering.
 
+امروزه استخراج داده از وب (web scraping) بسیار دشوار شده است. به طور مثال اگر `requests.get('http://edition.cnn.com')` را امتحان کنید، مشاهده خواهید کرد که پاسخی که دریافت می‌کنید حاوی داده‌های قابل استفاده بسیار کمی است! برای به دست آوردن داده‌های مورد نیاز، توانایی اجرای جاوا اسکریپت به صورت محلی به طور فزاینده‌ای ضروری شده است، زیرا سایت‌های بسیاری برای بارگذاری داده‌های واقعی خود از جاوااسکریپت استفاده می‌کنند. فرایند اجرای جاوا اسکریپت برای تولید خروجی نهایی و کامل HTML را رندر (rendering) می‌نامند. 
+
 To accomplish rendering, we use a neat project called Splash, which describes itself as a “JavaScript rendering service.” It can run in a Docker container and provides an API for rendering other sites. Internally, it uses a (JavaScript-capable) WebKit engine to fully load and render a website. This is what we’ll use to obtain website data. Our aiohttp server, shown in Example 4-14, will call this Splash API to obtain the page data.
+
+برای رندر کردن، از یک پروژه‌ جالب به نام Splash استفاده می‌کنیم، که خود را به عنوان "سرویس رندر جاوا اسکریپت" توصیف می‌کند. این پروژه می‌تواند در یک کانتینتر داکر اجرا شود و یک API برای رندر کردن سایت‌های دیگر ارائه می‌دهد. در داخل، از یک موتور WebKit(با قابلیت جاوا اسکریپت) برای بارگیری و رندر کامل وبسایت استفاده می‌شود. این همان چیزی است که ما برای به دست آوردن داده‌های وبسایت استفاده خواهیم کرد. سرور aiohttp ما، که در مثال 14-4 نشان داده شده است، API مربوط به Splash را فراخوانی می‌کند تا داده‌های صفحه را به دست آورد. 
 
 > To obtain and run the Splash container, run these commands in your shell:
 >```bash
@@ -862,7 +933,17 @@ To accomplish rendering, we use a neat project called Splash, which describes it
 >```
 >Our server backend will call the Splash API at http://localhost:8050.
 
+>برای ایجاد و اجرای کانتینر Splash، دستورات زیر را در shell اجرا کنید:
+>```bash
+>$ docker pull scrapinghub/splash 
+>$ docker run --rm -p 8050:8050 scrapinghub/splash\
+>```
+>سرور بکند ما Splash API را در http://localhost:8050 فراخوانی خواهد کرد. 
+
+
 ***Example 4-14. Code for the news scraper***
+
+***مثال 14-4. کد مربوط به news scraper***
 
 ```python
 from asyncio import gather, create_task 
