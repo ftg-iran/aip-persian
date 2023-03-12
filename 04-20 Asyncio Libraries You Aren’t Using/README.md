@@ -1113,11 +1113,19 @@ Another great feature is automatic reconnection logic. If the server goes down a
 
 ### Case Study: Multiple Sockets
 
+### موردپژوهی: چندین سوکت
+
 Here’s a head-scratcher: if ØMQ provides sockets that are already asynchronous, in a way that is usable with threading, what is the point of using ØMQ with asyncio? The answer is cleaner code.
+
+در اینجا سوالی وجود دارد: اگر ØMQ سوکت‌هایی را ارائه می‌دهد که ناهمزمان بوده و می‌توانند با رشته‌ها استفاده شوند، پس فایده‌ی استفاده از ØMQ با asyncio چیست؟ پاسخ به این سوال کد تمیزتر است.
 
 To demonstrate, let’s look at a tiny case study in which you use multiple ØMQ sockets in the same application. First, **Example 4-15** shows the blocking version (this example is taken from the **zguide**, the official guide for ØMQ).
 
+برای نشان دادن این موضوع، بیاید به یک موردپژوهی مختصر نگاهی بیندازیم که در آن از چندین سوکت ØMQ در یک اپلیکیشن استفاده می‌شود. ابتدا، **مثال 15-4** نسخه‌ی مسدودکننده را نشان می‌دهد (این مثال از **zguide** گرفته شده است، راهنمای رسمی ØMQ)
+
 ***Example 4-15. The traditional ØMQ approach***
+
+***مثال 15-4. رویکرد سنتی ØMQ***
 
 ```python
 # poller.py 
@@ -1151,15 +1159,33 @@ while True:
 ```
 
 1. ØMQ sockets have types. This is a PULL socket. You can think of it as a receive-only kind of socket that will be fed by some other send-only socket, which will be a PUSH type.
+
+1. سوکت‌های ØMQ انواع مختلفی دارند. این یک سوکت PULL است. می‌توانید به آن به چشم یک سوکت recieve-only نگاه کنید که توسط دیگر سوکت‌های send-only که PUSH نام دارند تغذیه می‌شوند.
+
 2. The SUB socket is another kind of receive-only socket, and it will be fed a PUB socket which is send-only.
+
+2. سوکت SUB از دیگر انواع سوکت recieve-only است، که توسط یک سوکت PUB که از نوع send-only است تغذیه می‌شود.
+
+
 3. If you need to move data between multiple sockets in a threaded ØMQ application, you’re going to need a poller. This is because these sockets are not thread-safe, so you cannot recv() on different sockets in different threads.[^1]
+
+3. اگر نیاز به جابجایی داده میان چندین سوکت در یک برنامه‌ی ØMQ چندرشته‌ای دارید، به یک poller نیاز خواهید داشت. زیرا این سوکت‌ها از نظر رشته‌ای ایمن نیستند، به همین دلیل هم نمی‌توانید بر روی سوکت‌های مختلف در رشته‌های مختلف ()recv را اجرا کنید. 
+
 4. It works similarly to the select() system call. The poller will unblock when there is data ready to be received on one of the registered sockets, and then it’s up to you to pull the data off and do something with it. The big if block is how you detect the correct socket.
+
+4. این بخش مشابه با سیستم فراخوانی ()select است. زمانی که داده‌های آماده‌ی دریافت در یکی از سوکت‌های ثبت شده وجود داشته باشد poller از حالت انسداد خارج می‌شود، و سپس این شما هستید که باید داده‌ها را بردارید و با آن‌ها کاری انجام دهید. بلوک بزرگ if روشی است که با استفاده از آن می‌توانید سوکت صحیح را تشخیص دهید. 
 
 Using a poller loop plus an explicit socket-selection block makes the code look a little clunky, but this approach avoids thread-safety problems by guaranteeing the same socket is not used from different threads.
 
+استفاده از یک حلقه‌ی poller به همراه یک بلوک برای انتخاب صحیح سوکت باعث می‌شود که کد کمی گنگ به نظر رسد، اما این رویکرد تضمین می‌کند که یک سوکت یکسان در چندین رشته‌ی متفاوت مورد استفاده قرار نخواهد گرفت، و بدین ترتیب از مشکلات مربوط به thread-safety جلوگیری می‌کند.
+
 **Example 4-16** shows the server code.
 
+**مثال 16-4** کد سرور را نشان می‌دهد.
+
 ***Example 4-16. Server code***
+
+***مثال 16-4. کد سرور***
 
 ```python
 # poller_srv.py 
@@ -1180,6 +1206,8 @@ for i in itertools.count():
 
 This code is not important for the discussion, but briefly: there’s a PUSH socket and a PUB socket, as I said earlier, and a loop inside that sends data to both sockets every second. Here’s sample output from poller.py (note: both programs must be running):
 
+این کد برای بحث ما اهمیتی ندارد، اما به طور خلاصه: همانطور که پیش‌تر گفتم یک سوکت PUSH و یک سوکت PUB وجود دارند، و یک حلقه که داخل آن در هر ثانیه داده به هر دو سوکت ارسال می‌شود. این یک نمونه خروجی از poller.py است (نکته: هر دو برنامه باید در حال اجرا باشند):
+
 ```bash
 $ poller.py 
 Via PULL: 0 
@@ -1194,9 +1222,15 @@ Via SUB: 3
 
 The code works; however, our interest here is not whether the code runs, but rather whether asyncio has anything to offer for the structure of `poller.py`. The key thing to understand is that our asyncio code is going to run in a single thread, which means that it’s fine to handle different sockets in different coroutines—and indeed, this is exactly what we’ll do.
 
+برنامه کار می‌کند؛ با این وجود، در اینجا صرفا اجرای برنامه برای ما اهمیتی ندارد، آنچه برای ما مهم است این است که آیا asyncio چیز بیش‌تری برای ساختار `poller.py` ارائه می‌دهد. نکته مهمی که باید متوجه آن باشیم آن است که کد asyncio  ما قرار است در یک رشته اجرا شود، این بدان معناست که کار کردن سوکت‌های مختلف در روتین‌های مختلف خوب است-و در واقع این همان کاری است که انجام خواهیم داد.  
+
 Of course, **someone had to do the hard work** to add support for coroutines into pyzmq (the Python client library for ØMQ) itself for this to work, so it wasn’t free. But we can take advantage of that hard work to improve on the “traditional” code structure, as shown in **Example 4-17**.
 
+البته، **کسی باید کار سخت را انجام می‌داد** تا پشتیبانی از روتین‌ها را به pyzmq (کتابخانه‌ی کلاینت پایتون برای ØMQ) اضافه کند تا این روش کار کند، بنابراین این کار رایگان نبود. اما ما می‌توانیم از آن کار دشوار بهره ببریم تا ساختار کد "سنتی" خود را بهبود دهیم، همانطور که در **مثال 17-4** نشان داده شده است. 
+
 ***Example 4-17. Clean separation with asyncio***
+
+***مثال 17-4. جداسازی تمیز با asyncio***
 
 ```python
 # poller_aio.py 
