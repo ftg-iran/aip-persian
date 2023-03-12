@@ -1023,36 +1023,93 @@ web.run_app(app, port=8080)
 ```
 
 1. The `news()` function is the handler for the /news URL on our server. It returns the HTML page showing all the headlines.
+
+1. تابع `()news` یک handler  برای آدرس news/ بر روی سرور ما است. این تابع یک صفحه HTML شامل تمام تیترهای خبری را بازمی‌گرداند. 
+
 2. Here, we have only two news websites to be scraped: CNN and Al Jazeera. More could easily be added, but then additional postprocessors would also have to be added, just like the `cnn_articles()` and `aljazeera_articles()` functions that are customized to extract headline data.
+
+2. ما در اینجا تنها 2 وبسایت خبری را برای استخراج داده داریم: CNN و Al Jazeera. وبسایت‌های بیش‌تری را نیز می‌توانیم اضافه کنیم، اما در این صورت باید پس‌پردازش‌های دیگری را نیز اضافه کنیم، درست مانند تابع‌های `()cnn_articles` و  `()aljazeera_articles` که برای استخراج تیترهای خبری نوشته شده‌اند.
+
 3. For each news site, we create a task to fetch and process the HTML page data for its front page. Note that we unpack the tuple ((*s)) since the `news_fetch()` coroutine function takes both the URL and the postprocessing function as parameters. Each `news_fetch()` call will return a list of tuples as headline results, in the form `<article URL>`, `<article title>`.
+
+3. برای هر سایت خبری، یک تسک برای دریافت و پردازش داده‌های صفحه HTML برای صفحه اول آن ایجاد می‌کنیم. توجه داشته باشید که ما تاپل ((s*)) را باز می‌کنیم، زیرا تابع روتین `()news_fetch` هم URL و هم تابع پس‌پردازش را به عنوان پارامترهای ورودی دریافت می‌کند. هر فراخوانی `()news_fetch` یک لیست تاپل از نتایج تیترهای خبری را در قالب `<article URL>` , `<article title>` باز می‌گرداند.
+
 4. All the tasks are gathered together into a single Future (`gather()` returns a future representing the state of all the tasks being gathered), and then we immediately await the completion of that future. This line will suspend until the future completes.
+
+4. تمام تسک‌ها باهم در یک Future جمع می‌شوند (`()gather` یک future که نشان‌دهنده‌ی وضعیت تمام تسک‌های جمع‌اوری شده است را بازمی‌گرداند)، و سپس بلافاصله برای کامل شدن future از await استفاده می‌کنیم. این خط تا زمانی که future کامل شود متوقف خواهد شد.
+
 5. Since all the `news_fetch()` tasks are now complete, we collect all of the results into a dictionary. Note how nested comprehensions are used to iterate over tasks, and then over the list of tuples returned by each task. We also use f-strings to substitute data directly, including even the kind of page, which will be used in CSS to color the div background.
+
+5. از آنجایی که اکنون تمام تسک‌های `()news_fetch` کامل شده‌اند، تمام نتایج به دست آمده را در یک دیکشنری ذخیره می کنیم. توجه داشته باشید که چگونه nested comprehensions برای حلقه زدن بر روی تسک‌ها و همچنین لیست تاپل‌هایی که هر تسک بازمی‌گرداند استفاده می‌شود. علاوه بر این از f-stringها نیز برای جایگزینی مستقیم داده‌ها استفاده می‌کنیم، که حتی شامل نوع صفحه نیز می‌شود. نوع صفحه در CSS برای تغییر رنگ پس‌زمینه‌ی div استفاده می‌شود. 
+
 6. In this dictionary, the key is the headline title, and the value is an HTML string for a div that will be displayed in our result page.
+
+6. در این دیکشنری، کلید همان تیتر خبری، و مقدار یک رشته‌ی HTML برای یک div است که در صفحه نتایج ما نشان داده می‌شود. 
+
 7. Our web server is going to return HTML. We’re loading HTML data from a local file called index.html. This file is presented in **Example B-1** if you want to re-create the case study yourself.
+
+7. وب سرور ما قرار است HTML بازگرداند. ما داده‌های HTML را از یک فایل لوکال با نام index.html بارگذاری می‌کنیم. این فایل در **مثال B-1** نشان داده شده است که در صورت تمایل می‌توانید از آن برای بازسازی این موردپژوهی استفاده کنید. 
+
 8. We substitute the collected headline div into the template and return the page to the browser client. This generates the page shown in **Figure 4-1**.
+
+8. تیترهای خبری جمع‌آوری شده را در قالب جایگزین کرده و صفحه را به مرورگر کلاینت بازمی‌گردانیم. این کار صفحه‌ای که در **شکل 1-4** نشان داده شده است را تولید می‌کند.
+
 9. Here, inside the `news_fetch()` coroutine function, we have a tiny template for hitting the Splash API (which, for me, is running in a local Docker container on port 8050). This demonstrates how aiohttp can be used as an HTTP client.
+
+9. در اینجا، در داخل تابع روتین `()news_fetch`، یک قالب کوچک برای استفاده از Splash API داریم (که برای من داخل یک کانتینر داکر لوکال بر روی پورت 8050 اجرا می‌شود). این نشان‌ می‌دهد که aiohttp چگونه می‌تواند به عنوان کلاینت HTTP مورد استفاده قرار گیرد. 
+
 10. The standard way is to create a `ClientSession()`instance, and then use the `get()` method on the session instance to perform the REST call. In the next line, the response data is obtained. Note that because we’re always operating on coroutines, with async with and await, this coroutine will never block: we’ll be able to handle many thousands of these requests, even though this operation (`news_fetch()`) might be relatively slow since we’re doing web calls internally.
+
+11. روش استاندارد ساخت یک instance از `()ClientSession`، و سپس استفاده از متد `()get` بر روی session instance برای اجرای فراخوانی REST است. در خط بعدی، داده‌های پاسخ دریافت می‌شوند. توجه داشته باشید که به خاطر آن که همیشه با async with و await با روتین‌ها کار می‌کنیم، این روتین هرگز مسدود نخواهد شد: ما قادر خواهیم بود که به هزاران درخواست از این نوع پاسخ دهیم، اگرچه این عملیات به خاطر فراخوانی وب به صورت درونی (`()new_fetch`) نسبتا کند باشد.
+
 11. After the data is obtained, we call the postprocessing function. For CNN, it’ll be `cnn_articles()`, and for Al Jazeera it’ll be `aljazeera_articles()`.
+
+11. پس از آنکه داده دریافت شد، تابع پس‌پردازش را فراخوانی می‌کنیم. برای CNN،‌ این تابع همان `()cnn_articles` و برای Al Jazeera همان `()aljazeera_articles` خواهد بود. 
+
 12. We have space only for a brief look at the postprocessing. After getting the page data, we use the Beautiful Soup 4 library for extracting headlines.
+
+12. ما تنها برای نگاهی کوتاه به فرایند پس‌پردازش فرصت داریم. پس از دریافت داده‌های صفحه، از کتابخانه‌ی Beautiful Soup 4  جهت استخراج تیترهای خبری استفاده می‌کنیم. 
+
 13. The `match()` function will return all matching tags (I’ve manually checked the HTML source of these news websites to figure out which combination of filters extracts the best tags), and then we return a list of tuples matching the format `<article URL>`, `<article title>`.
+
+13. تابع `()match` تمام تگ‌های مشابه را بازمی‌گرداند (من به طور دستی منبع HTML این وبسایت‌های خبری را بررسی کرده‌ام تا بفهمم کدام ترکیب از فیلترها بهترین تگ‌ها را استخراج خواهد کرد)، و سپس لیستی از تاپل‌ها را به شکل `<article URL>`, `<article title>` بازمی‌گردانیم. 
+
 14. This is the analogous postprocessor for Al Jazeera. The `match()` condition is slightly different, but it is otherwise the same as the CNN one.
+
+14. این پس‌پردازش‌کننده مشابه پس‌پردازش‌کننده Al Jazeera است. شرط `()match` کمی متفاوت است، اما در مجموع مشابه پردازش‌کننده‌ی CNN است. 
 
 Generally, you’ll find that aiohttp has a simple API and “stays out of your way” while you develop your applications.
 
+به طور کلی متوجه خواهید شد که aiohttp از API ساده‌تری برخوردار است و در حین توسعه برنامه‌هایتان، مزاحم شما نمی‌شود.
+
 In the next section, we’ll look at using ZeroMQ with asyncio, which has the curious effect of making socket programming quite enjoyable.
+
+در بخش بعدی، به استفاده از ZeroMQ با asyncio نگاهی خواهیم داشت، که اثر عجیبی داشته و موجب لذت‌بخش‌تر شدن برنامه‌نویسی با سوکت می‌شود. 
 
 ## ØMQ (ZeroMQ)
 
 >Programming is a science dressed up as art, because most of us don’t understand the physics of software and it’s rarely, if ever, taught. The physics of software is not algorithms, data structures, languages, and abstractions. These are just tools we make, use, and throw away. The real physics of software is the physics of people. Specifically, it’s about our limitations when it comes to complexity and our desire to work together to solve large problems in pieces. This is the science of programming: make building blocks that people can understand and use easily, and people will work together to solve the very largest problems.
 >--**Pieter Hintjens, ZeroMQ: Messaging for Many Applications**
 
+>برنامه‌نویسی علمی است که در قالب هنر ظاهر می‌شود، زیرا بسیاری از ما اساس کار نرم‌افزار را درک نمی‌کنیم، و این علم به ندرت آموزش داده می‌شود. اساس کار نرم‌افزار الگوریتم‌ها، ساختار داده‌ها، زبان‌ها، و انتزاعات نیستند. این‌ها تنها ابزارهایی هستند که ما آن‌ها را می‌سازیم، استفاده می‌کنیم، و در انتها دور می‌اندازیم. اساس کار واقعی نرم‌افزار اساس کار انسان‌ها است. در واقع، این مربوط به محدودیت‌های ما در مواجهه با پیچیدگی، و تمایلات ما برای همکاری جهت حل مشکلات بزرگ‌تر در قطعات کوچک است. این همان علم برنامه‌نویسی است: ایجاد بلوک‌های ساختمانی که برای دیگران ساده و قابل فهم باشند، تا آن‌ها بتوانند با همکاری یکدیگر بزرگ‌ترین مشکلات را حل کنند. 
+>--**Pieter Hintjens, ZeroMQ: Messaging for Many Applications**
+
+
 ØMQ (or ZeroMQ) is a popular language-agnostic library for networking applications: it provides “smart” sockets. When you create ØMQ sockets in code, they resemble regular sockets, with recognizable method names like `recv()` and `send()` and so on—but internally these sockets handle some of the more annoying and tedious tasks required for working with conventional sockets.
+
+کتابخانه‌ی ØMQ (یا ZeroMq) یک کتابخانه‌ی محبوب غیروابسته به زبان برای برنامه‌های شبکه است که سوکت‌های "هوشمند" را ارائه می‌دهد. زمانی که در برنامه سوکت‌های ØMQ را ایجاد می‌کنید، شبیه سوکت‌های معمولی هستند، با نام‌‌های قابل تشخیص برای متدها مانند `()resv` و `()send` و... . اما این سوکت‌ها به صورت داخلی برخی کارهای آزاردهنده‌تر و خسته‌کننده‌تر مورد نیاز برای کار با سوکت‌های معمولی را انجام می‌دهند.
 
 One of the features it provides is management of message passing, so you don’t have to invent your own protocol and count bytes on the wire to figure out when all the bytes for a particular message have arrived—you simply send whatever you consider to be a “message,” and the whole thing arrives on the other end intact.
 
+یکی از قابلیت‌هایی که این کتابخانه ارائه می دهد مدیریت ارسال پیام است. بدین ترتیب لازم نیست پروتکل خود را اختراع کنید و بایت‌ها را روی رشته بشمارید تا بفهمید چه زمانی تمام بایت‌های یک پیام خاص رسیده‌اند. شما به سادگی هر آنچه را که به عنوان یک "پیام" در نظر دارید را ارسال می‌کنید و تمام آن کاملا سالم و دست‌نخورده در سمت دیگر دریافت می‌شود.
+
 Another great feature is automatic reconnection logic. If the server goes down and comes back up later, the client ØMQ socket will automatically reconnect. And even better, messages your code sends into the socket will be buffered during the disconnected period, so they will all still be sent out when the server returns. These are some of the reasons ØMQ is sometimes referred to as brokerless messaging: it provides some of the features of message broker software directly in the socket objects themselves.
 
+یکی دیگر از ویژگی‌های عالی این کتابخانه منطق اتصال مجدد به صورت خودکار است. اگر سرور از کار بیفتد و بعدا دوباره راه‌اندازی شود، کلاینت سوکت ØMQ به طور خودکار به سرور متصل خواهد شد. و حتی بهتر، پیام‌هایی که کد شما به سوکت ارسال می‌کند در زمان قطع ارتباط بافر می‌شوند، بدین ترتیب زمانی که سرور دوباره متصل می‌شود تمام این پیام‌ها ارسال خواهند شد. این‌ قابلیت‌ها تنها چند دلیل برای آن است که ØMQ به عنوان پیام‌رسانی بدون واسط شناخته می‌شود: این کتابخانه برخی از قابلیت‌های سیستم‌های واسط پیام را به طور مستقیم در شئ‌های سوکت ارائه می‌دهد.
+
 ØMQ sockets are already implemented as asynchronous internally (so they can maintain many thousands of concurrent connections, even when used in threaded code), but this is hidden from us behind the ØMQ API. Nevertheless, support for Asyncio has been added to the PyZMQ Python bindings for the ØMQ library, and in this section we’re going to look at several examples of how you might incorporate these smart sockets into your Python applications.
+
+سوکت‌های ØMQ به صورت داخلی به شکل ناهمزمان پیاده‌سازی شده‌اند (تا بتوانند بیش از هزاران اتصال همزمان را حتی در کدهای چندرشته‌ای حفظ کنند)، اما این قابلیت در پشت ØMQ API از ما پنهان است. با این وجود، پشتیبانی از Asyncio به پیوندهای PyZMQ Python برای کتابخانه ØMQ اضافه شده است، و در این بخش، قرار است با چندین مثال نحوه‌ی استفاده از این سوکت‌های هوشمند در برنامه‌های پایتونی را بررسی کنیم. 
 
 ### Case Study: Multiple Sockets
 
