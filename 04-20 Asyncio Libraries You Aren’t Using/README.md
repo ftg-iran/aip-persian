@@ -1263,40 +1263,80 @@ asyncio.run(main())
 ```
 
 1. This code sample does the same as Example 4-15, except that now we’re taking advantage of coroutines to restructure everything. Now we can deal with each socket in isolation. I’ve created two coroutine functions, one for each socket; this one is for the PULL socket.
+
+1. این نمونه کد مانند مثال 15-4 عمل می‌کند، با این تفاوت که در اینجا ما از روتین‌ها برای بازسازی همه چیز استفاده می‌کنیم. حال می‌توانیم با هر سوکت به صورت مجزا کار کنیم. من دو تابع روتین ایجاد کرده‌ام، یکی برای هر سوکت؛ این یکی برای سوکت PULL است. 
+
 2. I’m using the asyncio support in pyzmq, which means that all send() and recv() calls must use the await keyword. The Poller no longer appears anywhere, because it’s been integrated into the asyncio event loop itself.
+
+2. من از پشتیبانی asyncio در pymzq استفاده می‌کنم، این بدان معناست که تمام فراخوانی‌های ()send و ()recv باید از کلیدواژه‌ی await استفاده کنند. Poller دیگر در هیچ کجا ظاهر نمی‌شود، زیرا در خود حلقه‌ی رویداد asyncio اقدام شده است. 
+
 3. This is the handler for the SUB socket. The structure is very similar to the PULL socket’s handler, but that need not have been the case. If more complex logic had been required, I’d have been able to easily add it here, fully encapsulated within the SUB-handler code only.
+
+3.  این بخش همان handler برای سوکت SUB است. ساختار این بخش بسیار مشابه با handler سوکت PULL است، اما این مسئله اهمیتی ندارد. اگر منطق پیچیده‌تری مورد نیاز بود، می‌توانستم آن را به راحتی به اینجا اضافه کنم، به شکلی که کاملا درون کد  SUB-handler کپسوله شود. 
+
 4. Again, the asyncio-compatible sockets require the await keyword to send and receive.
 
+4. دوباره، سوکت‌های سازگار با asyncio برای ارسال و دریافت به کلمه کلیدی await نیاز دارند.
 
 The output is the same as before, so I won’t show it.
 
+خروجی دقیقا مانند قبل است، پس دوباره آن را نشان نمی‌دهم. 
+
 The use of coroutines has, in my opinion, a staggeringly positive effect on the code layout in these examples. In real production code with lots of ØMQ sockets, the coroutine handlers for each could even be in separate files, providing more opportunities for better code structure. And even for programs with a single read/write socket, it is very easy to use separate coroutines for reading and writing, if necessary.
+
+به نظر من استفاده از روتین‌ها تاثیر مثبت خیره‌کننده‌ای بر طرح کد در این مثال‌ها دارد. در کدهای واقعی محیط توسعه با تعداد زیادی سوکت ØMQ، توابع handler روتین‌ها برای هرکدام می‌توانند در فایل‌های جداگانه نیز باشند و فرصت‌های بیش‌تری برای ساختار بهتر کد ارائه دهند. حتی برای برنامه‌هایی با تنها یک سوکت خواندن/نوشتن،‌ در صورت نیاز استفاده از روتین‌های مجزا برای خواندن و نوشتن بسیار راحت است. 
 
 The improved code looks a lot like threaded code, and indeed, for the specific example shown here, the same refactor will work for threading: run blocking do_receiver() and do_subscriber() functions in separate threads. But do you really want to deal with even the potential for race conditions, especially as your application grows in features and complexity over time?
 
+کد بهبودیافته شباهت زیادی با کد چندرشته‌ای دارد، و در حقیقت، برای مثال خاصی که در اینجا نشان داده شده است، همان refactor برای threading کار خواهد کرد: توابع مسدودکننده‌ی ()do_receiver و ()do_subscriber را در رشته‌های مجزا اجرا کنید. اما آیا واقعا می‌خواهید حتی با پتانسیل پیش آمدن race conditions دست و پنجه نرم کنید؟به خصوص زمانی که برنامه‌تان از نظر پیچیدگی زمانی و قابلیت‌ها به مرور زمان رشد کند. 
+
 There is lots to explore here, and as I said before, these magic sockets are a lot of fun to play with. In the next case study, we’ll look at a more practical use of ØMQ.
+
+در اینجا مطالب زیادی برای کاوش وجود دارند، و همانطور که پیش‌تر گفتم، کار با این سوکت‌های جادویی بسیار لذت‌بخش است. در موردپژوهی بعدی، به استفاده‌ای عملی‌تر از ØMQ نگاه خواهیم کرد. 
 
 ### Case Study: Application Performance Monitoring
 
+### موردپژوهی: نظارت بر عملکرد برنامه
+
 With the modern, containerized, microservice-based deployment practices of today, some things that used to be trivial, such as monitoring your apps’ CPU and memory usage, have become somewhat more complicated than just running top. Several commercial products have emerged over the last few years to deal with these problems, but their cost can be prohibitive for small startup teams and hobbyists.
 
+با روش‌های مدرن، کانتینری، و مبتنی بر میکروسرویس‌ها که امروزه در توسعه برنامه‌ها مورد استفاده قرار می‌گیرند، برخی از چیزهایی که در گذشته بی‌اهمیت بودند، مانند نظارت بر میزان مصرف CPU و حافظه، بسیار پیچیده‌تر شده‌اند. در چند سال اخیر چندین محصول تجاری برای مقابله با این مشکلات به بازار عرضه شده‌اند، اما هزینه استفاده از آن‌ها می‌تواند برای تیم‌های کوچک استارتاپی و علاقمندان بسیار زیاد باشد. 
+
 In this case study, I’ll exploit ØMQ and asyncio to build a toy prototype for distributed application monitoring. Our design has three parts:
+
+در این موردپژوهی، من از ØMQ و asyncio برای ساخت یک نمونه‌ی اولیه برای نظارت بر برنامه‌های توزیع شده استفاده خواهم کرد. طراحی ما 3 قسمت دارد:
 
 Application layer
 
 - This layer contains all our applications. Examples might be a “customers” microservice, a “bookings” microservice, an “emailer” microservice, and so on. I will add a ØMQ “transmitting” socket to each of our applications. This socket will send performance metrics to a central server.
 
+لایه Application
+
+- این لایه شامل تمام برنامه‌های ما می‌شود. به عنوان مثال می‌توان به یک میکروسرویس "مشتریان"، یک میکروسرویس "رزروها"، یک میکروسرویس "ایمیل" و... اشاره داشت. من به هر یک از برنامه‌هایمان یک سوکت "انتقال" ØMQ اضافه خواهم کرد. این سوکت معیارهای عملکرد را به یک سرور مرکزی ارسال خواهد کرد. 
+
 Collection layer
 
 - The central server will expose a ØMQ socket to collect the data from all the running application instances. The server will also serve a web page to show performance graphs over time and will live-stream the data as it comes in.
 
+لایه Collection
+
+- سرور مرکزی یک سوکت ØMQ را برای جمع‌آوری داده از تمام برنامه‌های در حال اجرا ارائه می‌دهد. علاوه بر این سرور یک صفحه وب نیز برای نشان دادن گراف‌های عملکرد در طول زمان ارائه خواهد داد و داده‌های ورودی را به صورت زنده نیز نمایش می‌دهد. 
+
 Visualization layer
+
+لایه Visualization
 
 - This is the web page being served. We’ll display the collected data in a set of charts, and the charts will live-update in real time. To simplify the code samples, I will use the convenient Smoothie Charts JavaScript library, which provides all the necessary client-side features.
 
+- این لایه همان صفحه وب است که نمایش داده می‌شود. ما داده‌های جمع‌آوری شده را در مجموعه‌ای از نمودارها نشان خواهیم داد، و این نمودارها به صورت لحظه‌ای به روز می‌شوند. برای ساده‌‌سازی نمونه های کد، من از کتابخانه‌ی جاوااسکریپتی Smothie Charts استفاده خواهم کرد؛ این کتابخانه تمام ویژگی‌های مورد نیاز سمت کلاینت را فراهم می‌کند. 
+
 The backend app (application layer) that produces metrics is shown in Example 4-18.
 
+برنامه‌ی بکند (لایه application) که معیارها را تولید می‌کند در مثال 18-4 نشان داده شده است.
+
 ***Example 4-18. The application layer: producing metrics***
+
+***مثال 18-4. لایه application: تولید معیارها***
 
 ```python
 import argparse 
@@ -1348,22 +1388,60 @@ if __name__ == '__main__':
 ```
 
 1. This coroutine function will run as a long-lived coroutine, continually sending out data to the server process.
+
+1. این تابع روتین به عنوان یک روتین طولانی‌مدت اجرا می‌شود و طور مداوم داده‌ها را به سرور ارسال می‌کند.
+
 2. Create a ØMQ socket. As you know, there are different flavors of socket; this one is a PUB type, which allows one-way messages to be sent to another ØMQ socket. This socket has—as the ØMQ guide says—superpowers. It will automatically handle all reconnection and buffering logic for us.
+
+2. یک سوکت ØMQ بسازید. همانطور که می‌دانید، انواع مختلفی از سوکت‌ها وجود دارند؛ این سوکت از نوع PUB است، که اجازه می‌دهد پیام‌های یک‌طرفه به یک سوکت ØMQ دیگر ارسال شوند. این سوکت همانطور که در راهنمای ØMQ به آن اشاره شده است قدرت‌های فوق‌العاده‌ای دارد و به صورت خودکار تمام اتصالات مجدد و منطق بافر را برای ما مدیریت خواهد کرد. 
+
 3. Connect to the server.
+
+3. به سرور متصل شوید.
+
 4. Our shutdown sequence is driven by KeyboardInterrupt, farther down. When that signal is received, all the tasks will be cancelled. Here I handle the raised `CancelledError` with the handy `suppress()` context manager from the `contextlib` standard library module.
+
+4. توالی خاموشی ما توسط KeyboardInterrupt هدایت می‌شود، به سمت پایین‌تر. زمانی که سیگنال دریافت می‌شود، تمام تسک‌ها لغو می‌شوند. در اینجا من از `()supress` که یک context manager از ماژول کتابخانه‌ی استاندارد `        contextlib` است برای کنترل خطای `CancelledError` استفاده می‌کنم. 
+
 5. Iterate forever, sending out data to the server.
+
+5. ارسال داده‌ها به سرور تا ابد تکرار می‌شود.
+
 6. Since ØMQ knows how to work with complete messages, and not just chunks off a bytestream, it opens the door to a bunch of useful wrappers around the usual `sock.send()` idiom: here, I use one of those helper methods, `send_json()`, which will automatically serialize the argument into JSON. This allows us to use a `dict()` directly.
+
+6. از آنجایی که ØMQ می‌داند چگونه با پیام‌های کامل، و نه فقط تکه‌هایی از بایت‌استریم، کار کند، دری به سمت استفاده از wrapperهایی مفید برای `()socket.send` گشوده می‌شود: در اینجا، از یکی از آن توابع کمک‌کننده به نام `()send_json` کار می‌کنم، که به طور اتوماتیک آرگومان ورودی را به JSON تبدیل می‌کند. استفاده از این تابع به ما اجازه می‌دهد که مستقیما از `()dict` استفاده کنیم. 
+
 7. A reliable way to transmit datetime information is via the ISO 8601 format. This is especially true if you have to pass datetime data between software written in different languages, since the vast majority of language implementations will be able to work with this standard.
+
+7. یکی از روش های مطمئن برای انتقال اطلاعات مربوط به زمان، استفاده از فرمت ISO 8601 است. استفاده از این روش به ویژه برای انتقال داده‌های زمانی میان نرم‌افزارهایی که به زبان‌های متفاوت نوشته شده‌اند توصیه می‌شود، زیرا اغلب پیاده‌سازی‌ها قادر به کار با این استاندارد هستند. 
+
 8. To end up here, we must have received the `CancelledError` exception resulting from task cancellation. The ØMQ socket must be closed to allow program shutdown.
+
+8. برای اینکه به این نقطه برسیم باید خطای `CancelledError` که ناشی از لغو شدن تسک است را دریافت   کرده باشیم. برای آنکه برنامه خاموش شود، سوکت ØMQ باید بسته باشد. 
+
 9. The `main()` function symbolizes the actual microservice application. Fake work is produced with this sum over random numbers, just to give us some nonzero data to view in the visualization layer a bit later.
+
+9. تابع `()main` برنامه میکروسرویس واقعی را نشان می دهد. با این sum که بر روی اعداد تصادفی اجرا می‌شود داده‌های غیرواقعی تولید می‌شوند، فقط برای آنکه به ما داده‌‌های غیرصفر داده شود تا بتوانیم آن‌ها را کمی بعد در لایه‌ی visualization مشاهده کنیم. 
+
 10. I’m going to create multiple instances of this application, so it will be convenient to be able to distinguish between them (later, in the graphs) with a `--color` parameter.
+
+10. من چندین instance از این برنامه خواهم ساخت تا بتوانیم (بعدا، در بخش نمودارها) آن‌ها را با یک پارامتر `color--` تمییز دهیم. 
+
 11. Finally, the ØMQ context can be terminated.
+
+11. بالاخره، ØMQ context  را می‌توان خاتمه داد.
 
 The primary point of interest is the `stats_reporter()` function. This is what streams out metrics data (collected by the useful psutil library). The rest of the code can be assumed to be a typical microservice application.
 
+نکته‌ی اصلی مورد توجه تابع `()stats_reporter` است. این همان چیزی است داده های متریک را (که توسط کتابخانه‌ی مفید psutil جمع‌آوری شده‌اند) پخش می‌کند. باقی کد را می‌توان یک برنامه‌ی میکروسرویس معمولی فرض کرد. 
+
 The server code in Example 4-19 collects all the data and serves it to a web client.
 
+برنامه‌ی سرور در مثال 19-4 تمام داده‌ها را دریافت کرده و آن‌ها به کلاینت وب ارسال می‌کند. 
+
 ***Example 4-19. The collection layer: this server collects process stats***
+
+***مثال 19-4. لایه collection: این سرور آمار پروسه را جمع‌آوری می‌کند***
 
 ```python
 # metric-server.py 
