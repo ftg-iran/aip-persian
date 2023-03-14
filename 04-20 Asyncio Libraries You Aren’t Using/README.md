@@ -1503,24 +1503,72 @@ if __name__ == '__main__':
 ```
 
 1. One half of this program will receive data from other applications, and the other half will provide data to browser clients via server-sent events (SSEs). I use a `WeakSet()` to keep track of all the currently connected web clients. Each connected client will have an associated `Queue()` instance, so this connections identifier is really a set of queues.
+
+1. نیمی از این برنامه داده‌ها را از دیگر اپلیکیشن‌ها دریافت می‌کند، و نیمی دیگر از آن داده‌ها را توسط server-sent events (SSEs) به مرورگر کلاینت ارسال می‌کند. من برای پیگیری کلاینت‌هایی که در حال حاضر متصل هستند از `()WeakSet` استفاده می‌کنم. هر یک از کلاینت‌های متصل یک instance از `()Queue` را خواهند داشت، بدین ترتیب این شناسه از اتصالات در واقع مجموعه‌ای از صف‌ها است. 
+
 2. Recall that in the application layer, I used a `zmq`.PUB socket; here in the collection layer, I use its partner, the `zmq`.SUB socket type. This ØMQ socket can only receive, not send.
+
+2. همانطور که به خاطر دارید در لایه‌ی application از سوکت `zmq`.PUB استفاده کردم. در اینجا نیز در لایه‌ی collection،  من از شریک آن سوکت، یعنی سوکت `zmq`.SUB استفاده کردم. این سوکت ØMQ تنها می‌تواند داده‌ها را دریافت کند و قابلیت ارسال ندارد. 
+
 3. For the `zmq`.SUB socket type, providing a subscription name is required, but for our purposes, we’ll just take everything that comes in—hence the empty topic name.
+
+3. برای سوکت `zmq`.SUB،‌ ارائه یک نام برای اشتراک لازم است؛ اما برای اهداف ما، ما فقط هر چیزی که وارد می‌شود را دریافت می‌کنیم، از این رو نام اشتراک خالی است. 
+
 4. I bind the `zmq`.SUB socket. Think about that for second. In pub-sub configurations, you usually have to make the pub end the server (`bind()`) and the sub end the client (connect()). ØMQ is different: either end can be the server. For our use case, this is important, because each of our application-layer instances will be connecting to the same collection server domain name, and not the other way around.
+
+4. من سوکت `zmq`.SUB را متصل می‌کنم. یک لحظه به آن فکر کنید. در تنظیمات pub-sub، معمولا باید  pub را به سرور تبدیل کنید (`()bind`) و sub  را نیز به کلاینت تبدیل کنید(()connect). در ØMQ این مورد متفاوت است: هر دو طرف می‌توانند سرور باشند. برای مورد استفاده ما این مسئله اهمیت دارد، زیرا هر یک از instanceهای لایه application به یک مجموعه نام دامنه سرور یکسان متصل می‌شوند، و نه بالعکس. 
+
 5. The support for asyncio in `pyzmq` allows us to await data from our connected apps. And not only that, but the incoming data will be automatically deserialized from JSON (yes, this means data is a `dict()`).
+
+5. پشتیبانی از asyncio در `pyzmq` به ما اجازه می‌دهد از await برای دریافت داده از برنامه‌های متصل استفاده کنیم. علاوه بر این داده‌های دریافتی به طور خودکار از JSON به `()dict` تبدیل می‌شوند.
+
 6. Recall that our connections set holds a queue for every connected web client. Now that data has been received, it’s time to send it to all the clients: the data is placed onto each queue.
+
+6. به خاطر داشته باشید که مجموعه اتصالات ما برای هر کلاینت متصل یک صف نگه می‌دارد. حال که داده‌ها دریافت شده‌اند، زمان آن رسیده است که آن‌ها را به تمام کلاینت‌ها ارسال کنیم: داده در هر صف جایگذاری می‌شود. 
+
 7. The `feed()` coroutine function will create coroutines for each connected web client. Internally, **server-sent events** are used to push data to the web clients.
+
+7. تابع روتین `()feed` برای هر کلاینت متصل روتین‌هایی را ایجاد خواهد کرد. به طور داخلی، **رویدادهایی که از سمت سرور ارسال می‌شوند** برای ارسال داده‌ها به کلاینت‌های وب مورد استفاده قرار می‌گیرند.  
+
 8. As described earlier, each web client will have its own queue instance, in order to receive data from the `collector()` coroutine. The queue instance is added to the connections set, but because connections is a weak set, the entry will automatically be removed from connections when the queue goes out of scope—i.e., when a web client disconnects. Weakrefs are great for simplifying these kinds of bookkeeping tasks.
+
+8. همانطور که پیش‌تر توضیح داده شد، هر کلاینت وب یک instance از صف برای خود خواهد داشت تا بدین ترتیب بتواند از روتین `()collector` داده دریافت کند. صف به مجموعه‌ی اتصالات اضافه می‌شود، اما چون مجموعه‌ی اتصالات یک مجموعه‌ی ضعیف است، زمانی که صف از محدوده خارج می‌شود، ورودی به طور خودکار از مجموعه اتصالات حذف می‌شود؛ به طور مثال زمانی که یک کلاینت وب ارتباط خود را از دست می‌دهد. Weakrefها برای ساده‌تر کردن این نوع وظایف بسیار عالی هستند. 
+
 9. The `aiohttp_sse` package provides the `sse_response()` context manager. This gives us a scope inside which to push data to the web client.
+
+9. پکیج `aiohttp_see` یک context manager با نام `()sse_response` ارائه می‌دهد. بدین ترتیب ما محدوده‌ای داریم که می‌توانیم داخل آن داده‌ها را به کلاینت وب منتقل کنیم. 
+
 10. We remain connected to the web client, and wait for data on this specific client’s queue.
+
+10. به کلاینت وب متصل مانده و منتظر داده در صف مخصوص به این کلاینت می‌مانیم.
+
 11. As soon as the data comes in (inside `collector()`), it will be sent to the connected web client. Note that I reserialize the data dict here. An optimization to this code would be to avoid deserializing JSON in `collector()`, and instead use `sock.recv_string()` to avoid the serialization round trip. Of course, in a real scenario, you might want to deserialize in the collector, and perform some validation on the data before sending it to the browser client. So many choices!
+
+11. هر چه داده (در داخل `()collector`) دریافت شود، بلافاصله به کلاینت وب متصل ارسال خواهد شد. توجه داشته باشید که در اینجا من دیکشنری داده‌ها را مجددا به JSON تبدیل می‌کنم. یک روش برای بهینه‌سازی این کد این است که از تبدیل داده‌ی JSON به دیکشنری در `()collector` دوری کرده و به جای آن از `()sock.recv_string` استفاده کنیم تا از رفت و برگشت برای تبدیل داده جلوگیری کنیم. البته که در یک سناریوی واقعی ممکن است بخواهید داده را در collector از JSON به دیکشنری تبدیل کرده و پیش از ارسال داده به مرورگر کلاینت کمی اعتبارسنجی روی آن انجام دهید. انتخاب‌های زیادی در این زمینه وجود دارند. 
+
 12. The `index()` endpoint is the primary page load, and here we serve a static file called charts.html.
+
+12.  در اندپوینت `()index` بارگذاری صفحه اصلی انجام می‌شود، و ما در اینجا یک فایل استاتیک با نام charts.html را ارائه می‌کنیم. 
+
 13. The `aiohttp` library provides facilities for us to hook in additional long-lived coroutines we might need. With the `collector()` coroutine, we have exactly that situation, so I create a startup coroutine, `start_collector()`, and a shutdown coroutine. These will be called during specific phases of `aiohttp`’s startup and shutdown sequence. Note that I add the collector task to the app itself, which implements a mapping protocol so that you can use it like a dict.
+
+13. کتابخانه `aiohttp` امکاناتی برای ما فراهم می‌کند تا بتوانیم برای روتین‌های بلندمدت که ممکن است به آن‌ها نیاز داشته باشیم hook اضافه کنیم. با روتین `()collector`، ما دقیقا همین شرایط را داریم، برای همین من یک روتین راه‌اندازی با نام `()start_collector` و یک روتین shutdown ایجاد می‌کنم. این روتین‌ها در طی مراحل خاصی از راه‌اندازی و خاموشی `aiohttp` فراخوانی می‌شوند. توجه داشته باشید که من تسک collector را به خود برنامه اضافه می‌کنم، که یک پروتکل mapping را پیاده‌سازی می‌کند تا بتوانید از ان به عنوان یک دیکشنری استفاده کنید. 
+
 14. I obtain our `collector()` coroutine off the `app` identifier and call `cancel()` on that.
+
+14.  روتین `()collector` را از شناسه `app` دریافت می‌کنم و `()cancel` را برای آن فراخوانی می‌کنم. 
+
 15. Finally, you can see where the custom startup and shutdown coroutines are hooked in: the `app` instance provides hooks to which our custom coroutines may be appended.
+
+15. در نهایت، می‌توانید ببینید که روتین‌های راه‌اندازی و خاموشی که طراحی کردیم به کجا متصل هستند: نمونه `app` قلاب‌هایی (hook) را ارائه می‌دهد که روتین‌های سفارشی ما ممکن است به آن‌ها متصل شوند. 
 
 All that remains is the visualization layer, shown in **Example 4-20**. I’m using the **Smoothie Charts library** to generate scrolling charts, and the complete HTML for our main (and only) web page, charts.html, is provided in the **Example B-1**. There is too much HTML, CSS, and JavaScript to present in this section, but I do want to highlight a few points about how the server-sent events are handled in JavaScript in the browser client.
 
+تمام چیزی که باقی مانده است لایه‌ی visualization است که در **مثال 20-4** نشان داده شده است. من از **Smoothie Charts library** برای تولید نمودارهایی که قابلیت پیمایش دارند استفاده می‌کنم، و HTML کامل برای صفحه وب اصلی ما که همان charts.html است در **مثال 1-B** ارائه شده است. HTML, CSS, و جاوا اسکریپت زیادی برای ارائه در این بخش وجود دارد، اما من می‌خواهم چندین نکته درباره چگونگی کار با رویدادهای دریافتی از سوی سرور در جاواسکریپت در مرورگر کلاینت صحبت کنم. 
+
 ***Example 4-20. The visualization layer, which is a fancy way of saying “the browser”***
+
+***مثال 20-4. لایه‌ی visualization، که نامی زیبا برای "مرورگر" است***
 
 ```javascript
 <snip> 
@@ -1542,10 +1590,20 @@ evtSource.onmessage = function(e) {
 ```
 
 1. Create a new `EventSource()` instance on the /feed URL. The browser will connect to /feed on our server, (metric_server.py). Note that the browser will automatically try to reconnect if the connection is lost. Server-sent events are often overlooked, but in many situations their simplicity makes them preferable to WebSockets.
+
+1. یک instance جدید از `()EventSource` بر روی لینک feed/ ایجاد کنید. مرورگر بر روی سرور ما به feed/ متصل می‌شود، (mertic_server.py). توجه داشته باشید که در صورتی که اتصال از بین برود مرورگر به طور خودکار برای اتصال مجدد تلاش خواهد کرد. رویدادهای ارسال شده از سوی سرور معمولا نادیده گرفته می‌شوند،  اما در بسیاری از موقعیت‌ها سادگی‌ آن‌ها باعث می‌شود که به WebSockets ترجیح داده شوند. 
+
 2. The `onmessage` event will fire every time the server sends data. Here the data is parsed as JSON.
+
+2. رویداد `onmessage` هر زمان که سرور داده‌ای ارسال کند فعال می‌شود. در اینجا داده به عنوان JSON تجزیه می‌شود.
+
 3. The `cpu` identifier is a mapping of a color to a `TimeSeries()` instance (for more on this, see Example B-1). Here, we obtain that time series and append data to it. We also obtain the timestamp and parse it to get the correct format required by the chart.
 
+3. شناسه‌ی `cpu` یک نگاشت از یک رنگ به یک instance از `()TimeSeries` است (برای اطلاعات بیش‌تر در این زمینه، مثال B-1 را بررسی کنید). در اینجا، ما آن time series را به دست آورده و داده‌ها را به آن اضافه می‌کنیم. همچنین timestamp را نیز به دست آورده و آن را برای به دست آوردن فرمت صحیح مورد نیاز برای نمودار فرمت می‌کنیم. 
+
 Now we can run the code. To get the whole show moving, a bunch of command-line instructions are required, the first of which is to start up the data collector process:
+
+حال می‌توانیم برنامه را اجرا کنیم. برای آنکه تمام برنامه‌ها را اجرا کنیم به چند دستور خط فرمان نیاز داریم، اولین دستور برای شروع پروسه‌ی جمع‌آوری داده است:
 
 ```bash
 $ metric-server.py 
@@ -1555,6 +1613,8 @@ $ metric-server.py
 
 The next step is to start up all the microservice instances. These will send their CPU and memory usage metrics to the collector. Each will be identified by a different color, which is specified on the command line. Note how two of the microservices are told to leak some memory:
 
+قدم بعدی اجرای تمام instanceهای میکروسرویس‌ها است. این برنامه‌ها متریک‌های cpu و حافظه خود را به collector ارسال می‌کنند. هر یک از این داده‌ها با رنگ متفاوتی مشخص می‌شود، که در خط فرمان تعریف شده است. توجه داشته باشید که چگونه به دو مورد از میکروسرویس‌ها گفته می‌شود که مقداری از حافظه را نشت کنند. 
+
 ```bash
 $ backend-app.py --color red &
 $ backend-app.py --color blue --leak 10000 & 
@@ -1563,13 +1623,21 @@ $ backend-app.py --color green --leak 100000 &
 
 Figure 4-2 shows our final product in a browser. You’ll have to take my word for it that the graphs really do animate. You’ll notice in the preceding command lines that I added some memory leakage to blue, and a lot to green. I even had to restart the green service a few times to prevent it from climbing over 100 MB.
 
+شکل 2-4 نتیجه نهایی را بر روی مرورگر نشان می‌دهد. باور کنید که نمودارها واقعا متحرک هستند. متوجه خواهید شد که در دستورات خط فرمان قبلی، کمی نشت حافظه به خط آبی، و مقدار بیش‌تری به خط سبز اضافه کرده‌ام. حتی برای اینکه جلوی پیشروی خط سبز به بیش از 100MB را بگیرم باید آن را چند بار ری‌استارت می‌کردم. 
+
 ![Figure 4-2. We’d better get an SRE on green ASAP!](images/uaip_0402.png)
 
-Figure 4-2. We’d better get an SRE on green ASAP!
+![شکل 2-4. بهتر است هر جه سریع‌تر برای خط سبز SRE دریافت کنیم.](images/uaip_0402.png)
+
+شکل 2-4. بهتر است هر جه سریع‌تر برای خط سبز SRE دریافت کنیم.
 
 What is especially interesting about this project is this: any of the running instances in any part of this stack can be restarted, and no reconnect-handling code is necessary. The ØMQ sockets, along with the EventSource() JavaScript instance in the browser, magically reconnect and pick up where they left off.
 
+چیزی که درباره این پروژه بسیار جالب است این است: هر یک از نمونه‌های در حال اجرا در هر بخشی از این برنامه را می‌توان ری‌استارت کرد، و برای آن به هیچ برنامه‌ای جهت مدیریت اتصال مجدد نیاز نخواهد بود. سوکت‌های ØMQ، به همراه نمونه‌‌ی جاوا اسکریپتی ()EventScore در مرورگر، به شکل خارق‌العاده‌ای مجددا متصل شده و کار را از جایی که رها شده بود ادامه می‌دهند. 
+
 In the next section, we turn our attention to databases and to how asyncio might be used to design a system for cache invalidation.
+
+در بخش بعدی، توجه خود را صرف دیتابیس‌ها کرده و به این موضوع می‌پردازیم که asyncio چگونه می‌تواند برای طراحی سیستم‌های cache invalidation مورد استفاده قرار گیرد. 
 
 ## asyncpg and Sanic
 
