@@ -1640,12 +1640,20 @@ In the next section, we turn our attention to databases and to how asyncio might
 در بخش بعدی، توجه خود را صرف دیتابیس‌ها کرده و به این موضوع می‌پردازیم که asyncio چگونه می‌تواند برای طراحی سیستم‌های cache invalidation مورد استفاده قرار گیرد. 
 
 ## asyncpg and Sanic
+## asyncpg و Sanic
+
 
 The asyncpg library provides client access to the PostgreSQL database, but differentiates itself from other asyncio-compatible Postgres client libraries with its emphasis on speed. asyncpg is authored by Yury Selivanov, one of the core asyncio Python developers, who is also the author of the uvloop project. It has no third-party dependencies, although Cython is required if you’re installing from source.
 
+کتابخانه asyncpg دسترسی کلاینت به دیتابیس PostgreSQL را فراهم می‌کند. اما این کتابخانه با تاکید بر سرعت، خود را از دیگر کتابخانه‌های سازگار با asyncio برای کار با Postgres متمایز می‌کند. کتابخانه‌ی asyncpg توسط Yury Selivanov، یکی از اصلی‌ترین توسعه‌دهندگان asyncio Python، و نویسنده پروژه‌ی uvloop نوشته شده است. این کتابخانه هیچ وابستگی‌ third-party ندارد، البته اگر آن را از منبع نصب می‌کنید، Cpython لازم است. 
+
 asyncpg achieves its speed by working directly against the PostgreSQL binary protocol, and other advantages to this low-level approach include support for prepared statements and scrollable cursors.
 
+کتابخانه asyncpg به دلیل آن که مستقیما با پروتکل باینری PostgreSQL کار می‌کند سرعت بالایی دارد. از دیگر مزایای این رویکرد پشتیبانی از دستورات آماده و cursorهای قابل پیمایش است. 
+
 We’ll be looking at a case study using asyncpg for cache invalidation, but before that it will be useful to get a basic understanding of the API asyncpg provides. For all of the code in this section, we’ll need a running instance of PostgreSQL. This is most easily done with Docker, using the following command:
+
+ما به یک موردپژوهی که در آن از asyncpg برای cache invalidation استفاده شده است نگاهی خواهیم انداخت. اما پیش از آن بهتر است درک پایه‌ای از API که asyncpg ارائه می‌دهد به دست‌ آوریم. برای تمام کدهای این بخش، به یک نمونه‌ی در حال اجرا از PostgreSQL نیاز خواهیم داشت. این کار با استفاده از داکر و با دستور زیر به راحتی قابل انجام است:
 
 ```bash
 $ docker run -d --rm -p 55432:5432 postgres
@@ -1653,7 +1661,11 @@ $ docker run -d --rm -p 55432:5432 postgres
 
 Note that I’ve exposed port 55432 rather than the default, 5432, just in case you already have a running instance of the database on the default port. Example 4-21 briefly demonstrates how to use asyncpg to talk to PostgreSQL.
 
+توجه داشته باشید که من به جای پورت پیش‌فرض، 5432، پورت 55432 را مورد استفاده قرار داده‌ام، فقط به خاطر اینکه ممکن است یک نمونه در حال اجرای دیگر از این دیتابیس بر روی پورت پیش‌فرض آن داشته باشید. مثال 21-4 به طور خلاصه نحوه استفاده از asyncpg برای ارتباط با PostgreSQL را نشان می‌دهد.
+
 ***Example 4-21. Basic demo of asyncpg***
+
+***مثال 21-4. نمونه‌ای ساده از asyncpg***
 
 ```python
 # asyncpg-basic.py
@@ -1702,16 +1714,41 @@ if __name__ == '__main__':
 ```
 
 1. I’ve hidden some boilerplate away in a tiny util module to simplify things and keep the core message.
+
+1. من برخی از کدهای تکراری را در یک module کوچک util پنهان کرده‌ام تا همه چیز ساده‌تر شده و پیام اصلی نیز حفظ شود.
+
 2. The `Database` class gives us a context manager that will create a new database for us—in this, case named test—and will destroy that database when the context manager exits. This turns out to be very useful when experimenting with ideas in code. Because no state is carried over between experiments, you start from a clean database every time. Note that this is an async with context manager; we’ll talk more about that later, but for now, the focal area of this demo is what happens inside the `demo()` coroutine.
+
+2. کلاس `Database` یک context manager به ما می‌دهد که یک دیتابیس جدید برای ما خواهد ساخت (در این کد نام آن test است) و زمانی که context manager خارج شود دیتابیس را از بین خواهد برد. به نظر می‌رسد که این کار زمان ازمایش ایده‌های مختلف در کد بسیار مفید است. به دلیل عدم انتقال وضعیت بین آزمایش‌ها، می‌توانید هربار از یک دیتابیس تمیز شروع کنید. توجه داشته باشید که این یک context manager از نوع async with است؛ در ادامه بیش‌تر درباره آن صحبت خواهیم کرد، اما فعلا، محل تمرکز این کد چیزی است که در روتین `()demo` اتفاق می‌افتد.
+
 3. The `Database` context manager has provided us with a Connection instance, which is immediately used to create a new table, users.
+
+3. <p dir="rtl"> <code>Datebase</code> یک instance از Connection به ما ارائه کرده است، که بلافاصله برای ساخت یک جدول جدید در دیتابیس با نام users استفاده می‌شود.</p>
+
 4. I use `fetchval()` to insert a new record. While I could have used `execute()` to do the insertion, the benefit of using `fetchval()` is that I can obtain the id of the newly inserted record, which I store in the pk identifier.
 Note that I use parameters ($1 and $2) for passing data to the SQL query. Never use string interpolation or concatenation to build queries, as this is a security risk!
+
+4. من برای اضافه کردن رکورد جدید در دیتابیس از `()fetchval` استفاده می‌کنم. البته می‌توانستم از `()execute` برای انجام این کار استفاده کنم، اما مزیت استفاده از `()fetchval` این است که می‌توانم id رکورد جدیدی که به جدول اضافه شده است را دریافت کرده و آن را در شناسه‌ی pk ذخیره کنم. 
+
 5. In the remainder of this demo, I’m going to be manipulating data in the users table, so here I make a new utility coroutine function that fetches a record in the table. This will be called several times.
+
+5. در ادامه‌، قصد دارم داده‌ی موجود در جدول users را تغییر دهم، بنابراین در اینجا یک تابع روتین جدید می‌سازم که رکوردی را از دیتابیس را دریافت می‌کند. این تابع چندین بار فراخوانی خواهد شد.
+
 6. When retrieving data, it is far more useful to use the `fetch`-based methods, because these will return `Record` objects. asyncpg will automatically cast datatypes to the most appropriate types for Python.
+
+6. زمان دریافت داده‌ها، استفاده از توابع مبتنی بر `fetch` بسیار مفیدتر است، زیرا این توابع اشیاء از نوع `Record` را باز می‌گردانند. کتابخانه‌ی asyncpg به طور خودکار انواع داده‌ها را به مناسب‌ترین نوع برای پایتون تبدیل می‌کند. 
+
 7. I immediately use the `get_row()` helper to display the newly inserted record.
+
+7. بلافاصله از تابع کمکی `()get_row` برای نمایش رکورد جدیدی که به جدول اضافه شده است استفاده می‌کنم. 
+
 8. I modify data by using the `UPDATE` command for SQL. It’s a tiny modification: the year value in the date of birth is changed by one year. As before, this is performed with the connection’s `execute()` method. The remainder of the code demo follows the same structure as seen so far, and a `DELETE`, followed by another `print()`, happens a few lines down.
 
+8. از دستور `UPDATE` در SQL برای تغییر داده‌ها استفاده می‌کنم. یک تغییر کوچک: مقدار year در تاریخ تولد به اندازه 1 سال تغییر می‌کند. همانطور که پیش‌تر داشتیم، این کار با استفاده از تابع `()execute` انجام می‌شود. 
+
 ***Here’s the output of running this script:***
+
+***خروجی حاصل از اجرای این قطعه کد به شکل زیر است:‌***
 
 ```bash
 $ asyncpg-basic.py 
@@ -1722,9 +1759,15 @@ After DELETE: None
 
 Note how the date value retrieved in our Record object has been converted to a Python date object: asyncpg has automatically converted the datatype from the SQL type to its Python counterpart. A large table of type conversions in the asyncpg documentation describes all the type mappings that are built into the library.
 
+توجه داشته باشید که چگونه مقدار date که در شئ Record بازیابی شده است به یک شئ تاریخ در پایتون تبدیل شده است: asyncpg نوع داده‌ها را به طور خودکار از نوع SQL به معادل آن‌ها در پایتون تبدیل کرده است. یک جدول بزرگ از تبدیل انواع داده‌ها در داکیومنت asyncpg تمام نگاشت‌هایی که برای نوع داده‌ها در این کتابخانه وجود دارند را توضیح می‌دهد. 
+
 The preceding code is very simple, perhaps even crudely so if you’re used to the convenience of object-relational mappers (ORMs) like SQLAlchemy or the Django web framework’s built-in ORM. At the end of this chapter, I mention several third-party libraries that provide access to ORMs or ORM-like features for asyncpg.
 
+کد قبلی بسیار ساده است، شاید حتی بتوان آن را یک کد خام دانست (اگر به راحتی‌ِ کار با object-relational-mappers (ORMs) مانند SQLAlchemy یا ORM داخلی فریمورک وب Django عادت داشته باشید). در انتهای این فصل، من به چندین کتابخانه شخص ثالث اشاره خواهم داشت که دسترسی به ORM یا ویژگی‌های مشابه ORM را برای asyncpg فراهم می‌کنند. 
+
 **Example 4-22** shows my boilerplate Database object in the utils module; you may find it useful to make something similar for your own experiments.
+
+**مثال 22-4** شئ Database در ماژول utils را نشان می‌دهد؛ ممکن است ساخت چیزی مشابه برای آزمایش‌های خودتان برایتان مفید باشد. 
 
 ***Example 4-22. Useful tooling for your asyncpg experiments***
 
@@ -1806,17 +1849,45 @@ if __name__ == '__main__':
 ```
 
 1. The Database class is just a fancy context manager for creating and deleting a database from a PostgreSQL instance. The database name is passed into the constructor.
+
+1. کلاس Database فقط یک context manager برای ایجاد یا از بین بردن دیتابیس‌ها در یک instance از PostgreSQL است. نام دیتابیس به constructor داده می‌شود.
+
 2. (Note: The sequence of callouts in the code is intentionally different from this list.) This is an asynchronous context manager. Instead of the usual `__enter__()` and `__exit__()` methods, I use their `__aenter__()` and `__aexit__()`    counterparts.
+
+2. (توجه: دنباله‌ی فراخوانی‌ها در این کد عمدا با این لیست متفاوت است.) این یک context manager همزمان است. به جای تابع‌های معمول `()__enter__`  و `()__exit__`،‌ من از معادل‌های آن‌ها `()__aenter__` و `()__aexit__` استفاده می‌کنم. 
+
 3. Here, in the entering side, I’ll create the new database and return a connection to that new database. `server_command()` is another helper method defined a few lines down. I use it to run the command for creating our new database.
+
+3. در اینجا،‌ در بخش ورودی،‌ من دیتابیس جدید را ساخته و یک connection به این دیتابیس را بازمی‌گردانم. `()server_command` یکی دیگر از توابع کمکی است که چند خط پایین‌تر تعریف شده است. من از این تابع برای اجرای دستور مربوط به ساخت دیتابیس جدید استفاده می‌کنم. 
+
 4. I then make a connection to the newly created database. Note that I’ve hardcoded several details about the connection: this is intentional, as I wanted to keep the code samples small. You could easily generalize this by making fields for the username, hostname, and port.
+
+4. سپس به دیتابیس جدید یک اتصال برقرار می‌کنم. توجه داشته باشید که من تعدادی از جزئیات درباره اتصال را به صورت ثابت در کد وارد کرده‌ام: این کار عمدی است، چون می‌خواستم نمونه کدها را کوچک نگه دارم. شما می‌توانید با ساخت فیلدهایی برای نام کاربری، نام سرور، و پورت این کار را به صورت کلی انجام دهید. 
+
 5. In the exiting side of the context manager, I close the connection and…
+
+5. در بخش هیجان‌انگیز context manager، من اتصال را می‌بندم و... 
+
 6. …destroy the database.
-7. For completeness, this is our utility method for running commands against the PostgreSQL server itself. It creates a connection for that purpose, runs the given command, and exits.
+
+6. ...دیتابیس را از بین می‌برم.
+
+7. For completeness, this is our utility method for running commands against the PostgreSQL server itself. It creates a connection for that purpose, runs the given 
+command, and exits.
+
+7. برای کامل‌تر کردن،‌ این تابع کمکی ما برای اجرای دستورات مربوط به سرور PostgreSQL است. برای این منظور، یک اتصال ایجاد می‌کند، دستور مربوطه را اجرا کرده، و از اتصال خارج می‌شود.
+
 8. This function creates a long-lived socket connection to the database that will listen for events. This mechanism will be featured in the upcoming case study.
+
+8. این تابع یک اتصال سوکت بلند مدت به دیتابیس ایجاد می‌کند که به رویداد‌ها گوش مي‌دهد. این مکانیزم در موردپژوهی آتی مورد استفاده قرار می‌گیرد.
 
 >In point 8 for the preceding code, I created a dedicated connection for each channel I want to listen on. This is expensive since it means that a PostgreSQL worker will be completely tied up for every channel being listened to. A much better design would be to use one connection for multiple channels. Once you have worked through this example, try to modify the code to use a single connection for multiple channel listeners.
 
+>در نکته 8 برای کد قبلی، برای هر کانالی که قصد گوش دادن به آن را دارم یک اتصال مخصوص ایجاد کردم. این کار هزینه‌بر است، زیرا بدان معناست که یک PostgreSQL worker برای هر کانالی که به آن گوش داده می‌شود کاملا مشغول خواهد بود. یک طراحی بسیار بهتر استفاده از یک اتصال برای چندین کانال است. وقتی روی این مثال کار کردید، سعی کنید کد را به گونه‌ای تغییر دهید که از یک اتصال برای گوش دادن به چندین کانال استفاده کند. 
+
 Now that you have an understanding of the basic building blocks of asyncpg, we can explore it further with a really fun case study: using PostgreSQL’s built-in support for sending event notifications to perform cache invalidation!
+
+حال که درکی از مباحث پایه‌ای asyncpg پیدا کرده‌اید، می‌توانیم با یک موردپژوهی جالب آن را بیش‌تر بررسی کنیم: استفاده از پشتیبانی داخلی PostgreSQL برای ارسال اعلان‌های رویدادها جهت انجام cache invalidation!
 
 ### Case Study: Cache Invalidation
 
