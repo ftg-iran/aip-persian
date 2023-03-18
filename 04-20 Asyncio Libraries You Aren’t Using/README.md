@@ -1891,30 +1891,61 @@ Now that you have an understanding of the basic building blocks of asyncpg, we c
 
 ### Case Study: Cache Invalidation
 
+### موردپژوهی: Cache Invalidation
+
 >There are two hard things in computer science: cache invalidation, naming things, and off-by-one errors.
+>--Phil Karlton
+
+> در علوم کامپیوتر دو چیز مشکل وجود دارد: باطل کردن کَش (cache invalidation)، نامگذاری، و خطاهای off-by-one.  
 >--Phil Karlton
 
 t is common in web services and web applications that the persistence layer, i.e., the backing database (DB), becomes the performance bottleneck sooner than any other part of the stack. The application layer can usually be scaled horizontally by running more instances, whereas it’s trickier to do that with a database.
 
+در وب‌سرویس‌ها و برنامه‌های کاربردی وب رایج است که لایه‌ی persistence، یعنی همان دیتابیس پشتیبان (DB)، زودتر از هر بخش دیگری در ساختار موجب محدودیت عملکرد شود. لایه application معمولا با اجرای نمونه‌های بیش‌تر می‌تواند به صورت افقی  وسعت پیدا کند، در حالی که انجام این کار با پایگاه داده پیچیده‌تر است.
+
 This is why it’s common practice to look at design options that can limit excessive interaction with the database. The most common option is to use caching to “remember” previously fetched database results and replay them when asked, thus avoiding subsequent calls to the DB for the same information.
+
+به همین دلیل هم بررسی گزینه‌های طراحی که می‌توانند تعامل بیش از اندازه با دیتابیس را کاهش دهند رایج است. متداول‌ترین راه حل استفاده از سیستم کَش برای "به خاطر سپردن" نتایج پیشین دیتابیس است تا هنگام درخواست بعدی، از تکراری شدن تماس با دیتابیس برای دریافت همان اطلاعات جلوگیری شود. 
 
 However, what happens if one of your app instances writes new data to the database while another app instance is still returning the old, stale data from its internal cache? This is a classic cache invalidation problem, and it can be very difficult to resolve in a robust way.
 
+با این وجود، چه اتفاقی خواهد افتاد اگر یک نمونه از برنامه‌هایتان داده جدیدی را در دیتابیس وارد کند، در حالی که نمونه‌ای دیگر همچنان داده‌های قدیمی را از کَش داخلی خود بازمی‌گرداند؟ این مسئله یکی از مشکلات کلاسیک باطل کردن کَش است، و حل کردن آن به روشی مناسب می‌تواند بسیار دشوار باشد. 
+
 Our attack strategy is as follows:
 
+استراتژی حمله ما به شرح زیر است:
+
 1. Each app instance has an in-memory cache of DB queries.
+
+1. هر نمونه از برنامه یک کَش داخلی از کوئری‌های دیتابیس دارد.
+
 2. When one writes new data to the database, the database alerts all of the connected app instances of the new data.
+
+2. زمانی که داده جدیدی در دیتابیس نوشته می‌شود، دیتابیس به تمام نمونه‌های برنامه که متصل هستند هشدار می‌دهد.
+
 3. Each app instance then updates its internal cache accordingly.
+
+3. سپس هر نمونه برنامه کَش داخلی خود را متناسب با اطلاعات جدید به روز می‌کند.
 
 This case study will highlight how PostgreSQL, with its built-in support for event updates via the `LISTEN` and `NOTIFY` commands, can simply tell us when its data has changed.
 
+این موردپژوهی نشان می‌دهد که PostgreSQL، چگونه با پشتیبانی داخلی از به روزرسانی‌های رویداد از طریق دستورات `LISTEN` و `NOTIFY`، می‌تواند به سادگی به ما اعلام کند که داده‌های آن تغییر کرده‌اند. 
+
 asyncpg already has support for the `LISTEN/NOTIFY` API. This feature of PostgreSQL allows your app to subscribe to events on a named channel and to post events to named channels. PostgreSQL can almost become a lighter version of **RabbitMQ** or **ActiveMQ**!
+
+کتابخانه‌ی asyncpg در حال حاضر API مربوط به دستورات `LISTEN/NOTIFY` را پشتیبانی می‌کند. از ویژگی PostgreSQL به برنامه‌های شما اجازه می‌دهد که در رویدادهای یک کانال نامگذاری شده مشترک شده و رویدادها را در کانال‌های نامگذاری شده ارسال کند. از PostgreSQL می‌توانید به عنوان یک ورژن سبک‌تر از **RabbitMQ** و **ActiveMQ** استفاده کنید. 
 
 This case study has more moving parts than usual, and that makes it awkward to present in the usual linear format. Instead, we’ll begin by looking at the final product, and work backward toward the underlying implementation.
 
+این موردپژوهی دارای بخش‌هایی است که بیان آن‌ها به شکل خطیِ معمول  دشوار است. به جای این کار، با مشاهده نتیجه نهایی شروع کرده و به سمت پیاده‌سازی‌ اصلی پیش‌ می‌رویم.
+
 Our app provides a JSON-based API server for managing the favorite dishes of patrons at our robotic restaurant. The backing database will have only one table, patron, with only two fields: name and fav_dish. Our API will allow the usual set of four operations: create, read, update, and delete (CRUD).
 
+برنامه ما یک API مبتنی بر JSON برای مدیریت غذاهای مورد علاقه مشتریان در رستوران روباتیک ارائه می‌دهد. دیتابیس پشتیبان تنها یک جدول با نام patrons با دو فیلد name و fav_dish خواهد داشت. API ما امکان استفاده از 4 عملیات معمول را خواهد داشت: create, read, update, و delete. (یا همان CRUD) 
+
 The following is a sample interaction with our API using curl, illustrating how to create a new entry in our database (I haven’t yet shown how to start up the server running on localhost:8000; that will come later):
+
+در ادامه یک تعامل ساده با این API را با استفاده از دستور curl مشاهده می‌کنید که نحوه ایجاد یک داده جدیدی در دیتابیس را نشان می‌دهد. (من هنوز نحوه راه‌اندازی سرور روی localhost:8000 را نشان نداده‌ام؛ در ادامه به آن خواهیم پرداخت)
 
 ```bash
 $ curl -d '{"name": "Carol", "fav_dish": "SPAM Bruschetta"}' \
@@ -1926,9 +1957,15 @@ $ curl -d '{"name": "Carol", "fav_dish": "SPAM Bruschetta"}' \
 
 The `-d` parameter is for data [^2] , `-H` is for the HTTP headers, -X is for the HTTP request method (alternatives include `GET`, `DELETE`, P`UT, and a few others), and the URL is for our API server. We’ll get to the code for that shortly.
 
+پارامتر `d-` برای داده است [^2]، ‍‍`H-` برای هدرهای HTTP، پارامتر X- برای متد ریکوئست HTTP (که به جای آن می‌توانید از `GET`، `DELETE`، `PUT` و چند مورد دیگر استفاده کنید) و URL برای سرور API است. به زودی به کد مربوط به آن نیز خواهیم رسید. 
+
 In the output, we see that the creation was ok, and the id being returned is the primary key of the new record in the database.
 
+در خروجی، می‌توانیم مشاهده کنیم که ایجاد داده به خوبی پیش رفته است، و id به عنوان کلید اصلی رکورد جدیدی که در دیتابیس ساخته شده است بازمی‌گردد.
+
 In the next few shell snippets, we’ll run through the other three operations: read, update, and delete. We can read the patron record we just created with this command:
+
+در قطعه‌ کدهای بعدی در shell، سه عملیات دیگر را بررسی خواهیم کرد: read, update, و delete. با استفاده از دستور زیر می‌توانیم رکوردی که در دیتابیس ایجاد کردیم را مشاهده کنیم:
 
 ```bash
 $ curl -X GET http://localhost:8000/patron/37
@@ -1937,7 +1974,11 @@ $ curl -X GET http://localhost:8000/patron/37
 
 Reading the data is pretty straightforward. Note that the id of the desired record must be supplied in the URL.
 
+خواندن داده از دیتابیس به سادگی انجام می‌شود. توجه داشته باشید که id مربوط به رکورد مورد نظر باید در URL قرار داده شود.
+
 Next, we’ll update the record and check the results:
+
+در ادامه، رکورد ایجاد شده را آپدیت کرده و نتیجه را بررسی می‌کنیم:
 
 ```bash
 $ curl -d '{"name": "Eric", "fav_dish": "SPAM Bruschetta"}' \ 
@@ -1951,10 +1992,17 @@ $ curl -X GET http://localhost:8000/patron/37
 
 Updating a resource is similar to creating one, with two key differences:
 
+آپدیت کردن یک رکورد مشابه با ساخت آن است، با دو تفاوت کلیدی:
+
 - The HTTP request method (`-X`) is `PUT`, not POST.
 - The URL now requires the id field to specify which resource to update.
 
+- ریکوئست HTTP که با `X-` مشخص می‌شود `PUT` است، نه POST. 
+- برای مشخص کردن رکوردی که قصد آپدیت آن را دارید، باید فیلد id را در URL مشخص کنید.
+
 Finally, we can delete the record and verify its deletion with the following commands:
+
+در نهایت، می‌توانیم رکورد مورد نظر را حذف کرده و با دستورات زیر حذف آن را تایید کنیم: 
 
 ```bash
 $ curl -X DELETE http://localhost:8000/patron/37 
@@ -1965,9 +2013,15 @@ null
 
 As you can see, null is returned when you try to GET a record that doesn’t exist.
 
+همانطور که مشاهده می‌کنید، زمانی که می‌خواهید رکوردی که وجود ندارد را با GET دریافت کنید، null برگردانده می‌شود. 
+
 So far this all looks quite ordinary, but our objective is not only to make a CRUD API we want to look at cache invalidation. So, let’s turn our attention toward the cache. Now that we have a basic understanding of our app’s API, we can look at the application logs to see timing data for each request: this will tell us which requests are cached, and which hit the DB.
 
+تا اینجا همه چیز معمولی به نظر می‌رسد، اما هدف ما تنها ایجاد یک API برای CRUD نیست، بلکه می‌خواهیم که باطل کردن اعتبار کَش نیز بپردازیم. پس بهتر است توجه خود را به کَش معطوف کنیم.  حال که درک مناسبی از API برنامه خود پیدا کرده‌ایم، می‌توانیم به لاگ‌های برنامه نگاهی بیندازیم تا داده‌های زمانبندی هر درخواست را ببینیم: با این کار می‌توانیم متوجه شویم که کدام درخواست‌ها کَش شده‌اند، و کدام یک از آن‌ها به دیتابیس درخواست می‌دهند. 
+
 When the server is first started up, the cache is empty; it’s a memory cache, after all. We’re going to start up our server, and then in a separate shell run two GET requests in quick succession:
+
+زمانی که سرور برای اولین بار راه‌اندازی می‌شود، کَش خالی است: زیرا حافظه داخلی است. ما سرور خود را راه‌اندازی کرده و در یک shell جداگانه دو ریکوئست GET را پشت سر هم اجرا می‌کنیم:
 
 ```bash
 $ curl -X GET http://localhost:8000/patron/29 
@@ -1977,6 +2031,8 @@ $ curl -X GET http://localhost:8000/patron/29
 ```
 
 We expect that the first time we retrieve our record, there’s going to be a cache miss, and the second time, a hit. We can see evidence of this in the log for the API server itself (the first Sanic web server, running on localhost:8000):
+
+انتظار داریم اولین باری که رکورد خود را بازیابی می‌کنیم، چیزی در کَش وجود نداشته باشد، و دومین بار داده در کَش موجود باشد. ما می‌توانیم شواهدی از این موضوع را در لاگ سرور API مشاهده کنیم (اولین وب سرور Sanic که در localhost:8000 اجرا می شود):
 
 ```bash
 $ sanic_demo.py 
@@ -1994,13 +2050,28 @@ $ sanic_demo.py
 ```
 
 1. Everything up to this line is the default sanic startup log message.
+
+1. همه چیز تا این خط پیام‌های لاگ پیش‌فرص برای راه‌اندازی sanic است.
+
 2. As described, the first GET results in a cache miss because the server has only just started.
+
+2. همانطور که توضیح داده شد، اولین نتایج برای GET در کَش موجود نیستند، زیرا سرور به تازگی راه‌اندازی شده است.
+
 3. This is from our first curl -X GET. I’ve added some timing functionality to the API endpoints. Here we can see that the handler for the GET request took ~4 ms.
+
+3. این برای اولین curl -X GET است. من کمی قابلیت زمان‌بندی به اندپوینت‌های API اضافه کرده‌ام. در اینجا می‌توانیم مشاهده کنیم که اجرای تابع مربوط به ریکوئست GET تقریبا 4 میلی‌ثانیه طول می‌کشد. 
+
 4. The second GET returns data from the cache, and the much faster (100x faster!) timing data.
+
+4. دومین ریکوئست GET داده‌ها را از کَش بازمی‌گرداند،  داده‌های مربوط به زمانبندی آن نیز بسیار سریع‌تر است (100 برابر سریع‌تر!)
 
 So far, nothing unusual. Many web apps use caching in this way.
 
+تا اینجا هیچ چیز غیرعادی وجود نداشت. بسیاری از برنامه‌های وب به همین شکل از کَش استفاده می‌کنند. 
+
 Now let’s start up a second app instance on port 8001 (the first instance was on port 8000):
+
+حال بیاید یک نمونه برنامه دیگر در پورت 8001 راه‌اندازی کنیم (اولین نمونه روی پورت 8000 بود):
 
 ```bash
 $ sanic_demo.py --port 8001 
@@ -2011,6 +2082,8 @@ $ sanic_demo.py --port 8001
 
 Both instances, of course, connect to the same database. Now, with both API server instances running, let’s modify the data for patron John, who clearly lacks sufficient Spam in his diet. Here we perform an UPDATE against the first app instance at port 8000:
 
+البته که هر دو نمونه برنامه به یک دیتابیس متصل هستند. حال، با اجرای هر دو نمونه سرور API، داده‌های مربوط به کاربر John را تغییر می‌دهیم، که به وضوح فاقد Spam کافی در رژیم غذایی خود است. در اینجا عملیات UPDATE را در اولین نمونه برنامه در پورت 8000 اجرا می‌کنیم:
+
 ```bash
 $ curl -d '{"name": "John Cleese", "fav_dish": "SPAM on toast"}' \ 
     -H "Content-Type: application/json" \ 
@@ -2020,6 +2093,8 @@ $ curl -d '{"name": "John Cleese", "fav_dish": "SPAM on toast"}' \
 ```
 
 Immediately after this update event on only one of the app instances, both API servers, 8000 and 8001, report the event in their respective logs:
+
+بلافاصله پس از این رویداد مربوط به آپدیت بر روی یکی از نمونه‌‌ها، هر دور سرور API، در پورت‌های 8000 و 8001، رویداد را در لاگ‌های مربوطه نشان می‌دهند. 
 
 ```bash
 2019-10-02 08:35:49 - (perf)[INFO]: Got DB event: 
@@ -2047,7 +2122,11 @@ Immediately after this update event on only one of the app instances, both API s
 
 The database has reported the update event back to both app instances. We haven’t done any requests against app instance 8001 yet, though—does this mean that the new data is already cached there?
 
+دیتابیس رویداد مربوط به آپدیت را در هر دو instance از برنامه گزارش داده است. ما هنوز هیچ ریکوئستی به نمونه برنامه روی پورت 8001 ارسال نکرده‌ایم. آیا این بدان معناست که داده‌های جدید قبلا در کَش آن ذخیره شده‌اند؟
+
 To check, we can do a GET on the second server, at port 8001:
+
+برای بررسی، می‌توانیم یک ریکوئست GET روی سرور دوم، به پورت 8001 ارسال کنیم:
 
 ```bash
 $ curl -X GET http://localhost:8001/patron/29 
@@ -2056,20 +2135,39 @@ $ curl -X GET http://localhost:8001/patron/29
 
 The timing info in the log output shows that we do indeed obtain the data directly from the cache, even though this is our first request:
 
+اطلاعات زمانبندی در لاگ خروجی نشان می‌دهند که داده‌ها را مستقیما از کَش دریافت کرده‌ایم، با این که این اولین ریکوئست ما است:
+
 ```bash
 2019-10-02 08:46:45 - (perf)[INFO]: get Elapsed: 0.04 ms
 ```
 
 The upshot is that when the database changes, all connected app instances get notified, allowing them to update their caches.
 
+نتیجه این است که زمانی که دیتابیس تغییر می‌کند،‌تمام instanceهایی که به آن وصل هستند به طور خودکار مطلع شده و کَش خود را آپدیت می‌کنند. 
+
 With this explanation out of the way, we can now look at the asyncpg code implementation required to make our cache invalidation actually work. The basic design for the server code shown in Example 4-23 is the following:
 
+پس از توضیح این موضوع، حال می‌توانیم به پیاده‌سازی asyncpg که برای انجام cache invalidation لازم است نگاهی داشته باشیم. طراحی پایه برای کد سرور که در مثال 23-4 نشان داده شده است به شرح زیر است:
+
 1. We have a simple web API using the new, asyncio-compatible Sanic web framework.
+
+1. با استفاده از وب فریمورک جدید Sanic که با asyncio سازگار است یک API ساده داریم. 
+
 2. The data will be stored in a backend PostgreSQL instance, but the API will be served via multiple instances of the web API app servers.
+
+2. داده‌ها در یک instance از دیتابیس PostgreSQL ذخیره خواهند شد، اما API توسط چندین نمونه از سرورهای برنامه وب API ارائه می‌شود. 
+
 3. The app servers will cache data from the database.
+
+3. سرورهای برنامه داده‌ها را از دیتابیس کَش می‌کنند.
+
 4. The app servers will subscribe to events via asyncpg in specific tables on the DB, and will receive update notifications when the data in the DB table has been changed. This allows the app servers to update their individual in-memory caches.
 
+4. سرورهای برنامه توسط asyncpg در جداول مخصوصی بر روی در رویدادها مشترک می‌شوند، و زمانی که داده‌ها در جدول دیتابیس تغییر می‌کنند اطلاعیه‌های آپدیت دریافت می‌کنند. بدین ترتیب سرور‌های برنامه می‌توانند به صورت مستقل کَش داخل حافظه خود را آپدیت کنند. 
+
 ***Example 4-23. API server with Sanic***
+
+***مثال 23-4. سرور API با Sanic***
 
 ```python
 # sanic_demo.py 
