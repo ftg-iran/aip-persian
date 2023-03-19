@@ -2377,23 +2377,68 @@ async def create_table_if_missing(conn):
 ```
 
 1. You have to add triggers to the database in order to get notifications when data changes. I’ve created these handy helpers to create the trigger function itself (with `create_notify_trigger`) and to add the trigger to a specific table (with `add_table_triggers`). The SQL required to do this is somewhat out of scope for this book, but it’s still crucial to understanding how this case study works. I’ve included the annotated code for these triggers in Appendix B.
-2. The third-party boltons package provides a bunch of useful tools, not the least of which is the LRU cache, a more versatile option than the `@lru_cache` decorator in the `functools` standard library module [^3].
-3. This block of text holds all the SQL for the standard CRUD operations. Note that I’m using native PostgreSQL syntax for the parameters: $1, $2, and so on. There is nothing novel here, and it won’t be discussed further.
-4. Create the cache for this app instance.
-5. I called this function from the Sanic module inside the `new_patron()` endpoint for adding new patrons. Inside the function, I use the `fetchval()` method to insert new data. Why `fetchval()` and not `execute()`? Because `fetchval()` returns the primary key of the new inserted record! [^4]
-6. Update an existing record. When this succeeds, PostgreSQL will return UPDATE 1, so I use that as a check to verify that the update succeeded.
-7. Deletion is very similar to updating.
-8. This is the read operation. This is the only part of our CRUD interface that cares about the cache. Think about that for a second: we don’t update the cache when doing an insert, update, or delete. This is because we rely on the async notification from the database (via the installed triggers) to update the cache if any data is changed.
-9. Of course, we do still want to use the cache after the first GET.
-10. The `db_event()` function is the callback that asyncpg will make when there are events on our DB notification channel, `chan_patron`. This specific parameter list is required by `asyncpg`. conn is the connection on which the event was sent, pid is the process ID of the PostgreSQL instance that sent the event, channel is the name of the `channel` (which in this case will be `chan_patron`), and the payload is the data being sent on the channel.
-11. Deserialize the JSON data to a dict.
-12. The cache population is generally quite straightforward, but note that update events contain both new and old data, so we need to make sure to cache the new data only.
-13. This is a small utility function I’ve made to easily re-create a table if it’s missing. This is really useful if you need to do this frequently—such as when writing the code samples for this book!
-    This is also where the database notification triggers are created and added to our patron table. See Example B-1 for annotated listing of these functions.
+
+1. برای دریافت اعلان در زمان‌هایی که داده‌ها تغییر می‌کنند، باید محرک‌هایی را به دیتابیس اضافه کنیم. من این کمک‌کننده‌های مفید را برای ساخت تابع trigger (با ‍`create_notify_trigger`) و همچنین برای اضافه کردن trigger به یک جدول خاص (با `add_table_triggers`) ایجاد کرده‌ام. کوئری‌های SQL مورد نیاز برای انجام این کار تا حدودی از محدوده این کتاب خارج است، اما همچنان برای درک چگونه کار کردن این موردپژوهی لازم است. من کد مورد استفاده برای این محرک‌ها را در پیوست B قرار داده‌ام.
+
+1. The third-party boltons package provides a bunch of useful tools, not the least of which is the LRU cache, a more versatile option than the `@lru_cache` decorator in the `functools` standard library module [^3].
+
+1. پکیج boltons مجموعه‌ای از ابزارهای مفید را ارائه می‌دهد که کوچک‌ترین آن‌ها کَش LRU است، گزینه‌ای همه‌کاره‌تر نسبت به دکوراتور `lru_cache@` در ماژول کتابخانه استاندارد `functools`.
+
+1. This block of text holds all the SQL for the standard CRUD operations. Note that I’m using native PostgreSQL syntax for the parameters: $1, $2, and so on. There is nothing novel here, and it won’t be discussed further.
+
+1. این تکه متن شامل تمام SQL لازم برای عملیات استاندارد CRUD است. توجه داشته باشید که من برای پارامترها از سینتکس اصلی PostgreSQL استفاده می‌کنم: 1$, 2$, و غیره. در اینجا چیز جدیدی وجود ندارد و بیش‌تر در مورد آن بحث نخواهد شد.
+
+1. Create the cache for this app instance.
+
+1. برای این نمونه برنامه کَش را ایجاد کنید.
+
+1. I called this function from the Sanic module inside the `new_patron()` endpoint for adding new patrons. Inside the function, I use the `fetchval()` method to insert new data. Why `fetchval()` and not `execute()`? Because `fetchval()` returns the primary key of the new inserted record! [^4]
+
+1. من این تابع را از ماژول Sanic داخل اندپوینت `()new_patrons` برای اضافه کردن مشتریان جدید فراخوانی کردم. داخل تابع، از متد `()fetchval` برای اضافه کردن داده‌ی جدید استفاده می‌کنم. چرا `()fetchval` و نه `()execute`؟ زیرا `()fetchval` کلید اصلی رکورد جدید را بازمی‌‌گرداند! [^4]
+
+1. Update an existing record. When this succeeds, PostgreSQL will return UPDATE 1, so I use that as a check to verify that the update succeeded.
+
+1. یکی از رکوردهای موجود را آپدیت کنید. زمانی که این عملیات موفق‌ شود، UPDATE 1 از طرف PostgreSQL بازگردانده می‌شود. من از آن برای تایید موفق بودن عملیات آپدیت استفاده می‌کنم.
+
+1. Deletion is very similar to updating.
+
+1. عملیات حذف بسیار مشابه با عملیات آپدیت است.
+
+1. This is the read operation. This is the only part of our CRUD interface that cares about the cache. Think about that for a second: we don’t update the cache when doing an insert, update, or delete. This is because we rely on the async notification from the database (via the installed triggers) to update the cache if any data is changed.
+
+1. این عملیات خواندن است. این تنها بخشی از رابط CRUD ما است که به کَش اهمیت می دهد. یک لحظه به آن فکر کنید: زمان درج، اپدیت، و یا حذف داده‌ها کَش را آپدیت نمی‌کنیم. به این دلیل که برای آپدیت کَش در صورت تغییر داده‌ها به اعلان‌های async از سمت دیتابیس (از طریق محرک‌ها) متکی هستیم.
+
+1. Of course, we do still want to use the cache after the first GET.
+
+1. البته، ما همچنان می‌خواهیم پس از اولین GET از کَش استفاده کنیم.
+
+1. The `db_event()` function is the callback that asyncpg will make when there are events on our DB notification channel, `chan_patron`. This specific parameter list is required by `asyncpg`. conn is the connection on which the event was sent, pid is the process ID of the PostgreSQL instance that sent the event, channel is the name of the `channel` (which in this case will be `chan_patron`), and the payload is the data being sent on the channel.
+
+1. تابع `()db_event` یک callback است که زمانی که رویدادهایی در کانال اعلان‌های دیتابیس یا همان `chan_patrons` وجود دارند توسط asyncpg فراخوانی می‌شود. conn اتصالی است که رویداد بر روی آن ارسال شده است، pid همان process ID برای نمونه PostgreSQL است که رویداد را ارسال کرده است، channel نام `channel` است (که در این مورد `chan_patron` نام دارد)، و payload داده‌ای است که روی کانال ارسال می‌شود.
+
+1. Deserialize the JSON data to a dict.
+
+1. فایل JSON را به dict تبدیل کنید.
+
+1. The cache population is generally quite straightforward, but note that update events contain both new and old data, so we need to make sure to cache the new data only.
+
+1. پر کردن کَش به طور کلی ساده است، اما توجه داشته باشید که رویداد آپدیت شامل داده‌های جدید و داده‌های قدیمی است، به همین دلیل باید مطمئن شویم که تنها داده‌های جدید را کَش می‌کنیم.
+
+1. This is a small utility function I’ve made to easily re-create a table if it’s missing. This is really useful if you need to do this frequently—such as when writing the code samples for this book!
+
+1. این یک تابع کاربردی کوچک است که من برای ایجاد کردن مجدد جدول در صورتی که وجود نداشته باشد ساخته‌ام. اگر نیاز به انجام مکرر این کار دارید این تابع بسیار مفید است-مثلا هنگام نوشتن نمونه‌های کد برای این کتاب!
+
+This is also where the database notification triggers are created and added to our patron table. See Example B-1 for annotated listing of these functions.
+
+همچنین اینجا همان جایی است که محرک‌های اعلان‌های دیتابیس ساخته شده و به جدول patron اضافه می‌شوند. برای مشاهده‌ی فهرست مشروح این توابع به مثال B-1 مراجعه کنید.
 
 That brings us to the end of this case study. We’ve seen how Sanic makes it very simple to create an API server, and we’ve seen how to use asyncpg for performing queries via a connection pool, and how to use PostgreSQL’s async notification features to receive callbacks over a dedicated, long-lived database connection.
 
+این مثال ما را به پایان این موردپژوهی می‌رساند. مشاهده کردیم که استفاده از Sanic می‌تواند تا چه حد ساخت سرور API را آسان کند، و دیدیم که چگونه می‌توان از asyncpg برای اجرای کوئری‌ها توسط connection pool استفاده کرد، و همچنین چگونه می‌توان از قابلیت اعلان‌های async در PostgreSQL برای دریافت callbackها بر روی یک اتصال مخصوص و بلندمدت دیتابیس استفاده کرد.
+
 Many people prefer to use object-relational mappers to work with databases, and in this area, SQLAlchemy is the leader. There is growing support for using SQLAlchemy together with asyncpg in third-party libraries like asyncpgsa and GINO. Another popular ORM, Peewee, is given support for asyncio through the aiopeewee package.
+
+بسیاری از مردم ترجیه می‌دهند برای کار با دیتابیس‌ها از object-relational mappers استفاده کنند، و در این زمینه SQLAlchemy پیشتاز است. پشتیبانی رو به رشدی برای استفاده از SQLAlchemy با asyncpg در کتابخانه‌های third-part مانند asyncpgsa و GINO وجود دارد. یکی از دیگر از ORMهای محبوب، Peewee، از طریق پکیج aiopeewee از asyncio پشتیبانی می‌کند.
 
 ## Other Libraries and Resources
 
