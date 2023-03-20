@@ -1170,7 +1170,7 @@ while True:
 
 1. If you need to move data between multiple sockets in a threaded ØMQ application, you’re going to need a poller. This is because these sockets are not thread-safe, so you cannot recv() on different sockets in different threads.[^1]
 
-1. اگر نیاز به جابجایی داده میان چندین سوکت در یک برنامه‌ی ØMQ چندرشته‌ای دارید، به یک poller نیاز خواهید داشت. زیرا این سوکت‌ها از نظر رشته‌ای ایمن نیستند، به همین دلیل هم نمی‌توانید بر روی سوکت‌های مختلف در رشته‌های مختلف ()recv را اجرا کنید.
+1. اگر نیاز به جابجایی داده میان چندین سوکت در یک برنامه‌ی ØMQ چندرشته‌ای دارید، به یک poller نیاز خواهید داشت. زیرا این سوکت‌ها از نظر رشته‌ای ایمن نیستند، به همین دلیل هم نمی‌توانید بر روی سوکت‌های مختلف در رشته‌های مختلف ()recv را اجرا کنید.[^1]
 
 1. It works similarly to the select() system call. The poller will unblock when there is data ready to be received on one of the registered sockets, and then it’s up to you to pull the data off and do something with it. The big if block is how you detect the correct socket.
 
@@ -2382,7 +2382,7 @@ async def create_table_if_missing(conn):
 
 1. The third-party boltons package provides a bunch of useful tools, not the least of which is the LRU cache, a more versatile option than the `@lru_cache` decorator in the `functools` standard library module [^3].
 
-1. پکیج boltons مجموعه‌ای از ابزارهای مفید را ارائه می‌دهد که کوچک‌ترین آن‌ها کَش LRU است، گزینه‌ای همه‌کاره‌تر نسبت به دکوراتور `lru_cache@` در ماژول کتابخانه استاندارد `functools`.
+1. پکیج boltons مجموعه‌ای از ابزارهای مفید را ارائه می‌دهد که کوچک‌ترین آن‌ها کَش LRU است، گزینه‌ای همه‌کاره‌تر نسبت به دکوراتور `lru_cache@` در ماژول کتابخانه استاندارد `functools` [^3]. 
 
 1. This block of text holds all the SQL for the standard CRUD operations. Note that I’m using native PostgreSQL syntax for the parameters: $1, $2, and so on. There is nothing novel here, and it won’t be discussed further.
 
@@ -2442,21 +2442,54 @@ Many people prefer to use object-relational mappers to work with databases, and 
 
 ## Other Libraries and Resources
 
+## کتابخانه‌ها و منابع دیگر
+
 There are many other libraries for asyncio not covered in this book. To find out more, you can check out the aio-libs project, which manages nearly 40 libraries, and the Awesome asyncio project, which bookmarks many other projects compatible with the asyncio module.
+
+کتابخانه‌های بسیار دیگری برای asyncio وجود دارند که در این کتاب به آن‌ها پرداخته نشد. برای کسب اطلاعات بیش‌تر می‌توانید پروژه aio-libs را بررسی کنید که نزدیک به 40 کتابخانه را مدیریت می‌کند، و همچنین پروژه Awesome asyncio که بسیاری از پروژه‌های دیگر سازگار با ماژول asyncio را نشان می‌دهد. 
 
 One library that bears special mention is aiofiles. As you may recall from our earlier discussions, I said that to achieve high concurrency in Asyncio, it is vitally important that the loop never block. In this context, our focus on blocking operations has been exclusively network-based I/O, but it turns out that disk access is also a blocking operation that will impact your performance at very high concurrency levels. The solution to this is aiofiles, which provides a convenient wrapper for performing disk access in a thread. This works because Python releases the GIL during file operations so your main thread (running the asyncio loop) is unaffected.
 
+یکی از کتابخانه‌هایی که باید به آن اشاره ویژه‌ای داشته باشیم aiofiles است. همانطور که ممکن است از بحث‌های قبلی به خاطر داشته باشید،‌ گفتم که برای دستیابی به همزمانی بالا در Asyncio، بسیار مهم است که حلقه هرگز مسدود نشود. در این زمینه، تمرکز ما بر عملیات مسدودکننده عمدتا بر روی ورودی و خروجی‌های مبتنی بر شبکه بوده است، اما اینطور که به نظر می‌رسد دسترسی به دیسک نیز یک عملیات مسدودکننده است که در سطوح بالای همزمانی بر عملکرد شما تاثیرگذار خواهد بود. راه حل این مورد aiofiles است که روش مناسبی برای دسترسی به دیسک در رشته‌ها ارائه می‌دهد. این روش به این دلیل کار می‌کند که پایتون هنگام عملیات مربوط به فایل‌ها GIL را ازاد می‌کند تا رشته اصلی شما (که حلقه asyncio را اجرا می‌کند) تحت تاثیر قرار نگیرد. 
+
 The most important domain for Asyncio is going to be network programming. For this reason, it’s not a bad idea to learn a little about socket programming, and even after all these years, Gordon McMillan’s “Socket Programming HOWTO”, included with the standard Python documentation, is one of the best introductions you’ll find.
+
+مهم‌ترین دامنه برای Asyncio برنامه‌نویسی شبکه است. به همین دلیل، بد نیست که کمی درباره برنامه‌نویسی سوکت بیاموزید، و حتی پس از گذشت این همه سال، “Socket Programming HOWTO” از Gordon McMillan، که همراه داکیومنت استاندارد پایتون ارائه می‌شود، یکی از بهترین معرفی‌هایی است که می‌توانید پیدا کنید. 
 
 I learned Asyncio from a wide variety of sources, many of which have already been mentioned in earlier sections. Everyone learns differently, so it’s worth exploring different types of learning materials. Here are a few others that I found useful:
 
+من Asyncio را از منابع مختلفی یاد گرفتم، که بسیاری از آن‌ها در بخش‌های قبلی معرفی شده‌اند. هر کس به روش متفاوتی یاد می‌گیرد، پس بهتر است مواد آموزشی مختلف را بررسی کنید. در اینجا به چند مورد دیگر اشاره شده است که به نظر من مفیدند:
+
 - Robert Smallshire’s “Get to Grips with Asyncio in Python 3” talk, presented at NDC London in January 2017. This is by far the best YouTube video on Asyncio I’ve come across. The talk may be somewhat advanced for a beginner, but it really does give a clear description of how Asyncio is designed.
+
+- سخنرانی “Get to Grips with Asyncio in Python 3” از Robert Smallshire که در NDC لندن در ژانویه 2017 ارائه شد. تا کنون این بهترین ویدئوی یوتیوب درباره Asyncio است که به آن برخوردم. این سخنرانی ممکن است برای افراد مبتدی کمی پیشرفته باشد، اما واقعا توضیح شفافی از چگونگی طراحی Asyncio ارائه می‌دهد. 
+
 - Nikolay Novik’s “Building Apps with Asyncio” slides, presented at PyCon UA 2016. The information is dense, but a lot of practical experience is captured in these slides.
+
+- اسلایدهای “Building Apps with Asyncio” از Nikolay Novik که در سال 2016 در  PyCon UA  ارائه شد. اطلاعات ارائه شده سنگین هستند، اما تجربیات عملی بسیاری در این اسلایدها گنجانده شده است.
+
 - Endless sessions in the Python REPL, trying things out and “seeing what happens.”
+
+- استفاده‌ی بسیار از Python REPL، آزمایش کردن موارد گوناگون، و دیدن نتایجی که حاصل می‌شوند.
 
 I encourage you to continue learning, and if a concept doesn’t stick, keep looking for new sources until you find an explanation that works for you.
 
-[^1]: Actually, you can as long as the sockets being used in different threads are created, used, and destroyed entirely in their own threads. It is possible but hard to do, and many people struggle to get this right. This is why the recommendation to use a single thread and a polling mechanism is so strong.
+شما را تشویق می‌کنم که به یادگیری ادامه دهید، و اگر در درک مفهومی مشکل دارید، به دنبال منابع جدید باشید تا توضیحی را پیدا کنید که برایتان مفید باشد. 
+
+[^1]: Actually, you can as long as the sockets being used in different threads are created, used, and destroyed entirely in their own threads. It is possible but hard to do, and many people struggle to get this right. This is why the recommendation to use a single thread and a 
+polling mechanism is so strong.
+
+[^1]: در واقع، می‌توانید این کار را انجام دهید. به شرطی که سوکت‌هایی که در رشته‌های مختلف مورد استفاده قرار می‌گیرند به طور کامل در رشته‌های خود ساخته شده، مورد استفاده قرار گرفته، و نابود شوند. انجام این کار ممکن، اما مشکل است، و بسیاری ازا فراد برای انجام صحیح آن تلاش می‌کنند. به همین دلیل هم بیش‌تر توصیه می‌شود از یک رشته و مکانیزم polling استفاده شود. 
+
 [^2]: The recipe for this dish, and recipes for other fine Spam-based fare, can be found on the UKTV website.
+
+[^2]: دستور تهیه این غذا، و دیگر غذاها با Spam را می‌توانید در وبسایت UKTV بیابید. 
+
 [^3]: Obtain boltons with pip install boltons.
+
+[^3]: با pip install boltons آن را نصب کنید.
+
 [^4]: You also need the RETURNING id part of the SQL, though!
+
+[^4]: البته به بخش RETURNING id از SQL نیز نیاز دارید!
+
