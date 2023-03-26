@@ -1,5 +1,5 @@
 # aip-persian
-![Cover](cover.jpg)
+![Cover](cover.png)
 
 ترجمه آزاد کتاب Asyncio in Python
 
