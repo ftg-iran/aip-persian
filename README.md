@@ -16,10 +16,10 @@
 
 | تاریخ اتمام ترجمه      | مترجم | سرفصل     |
 | :---:        |    :----:   |          :---: |
-| | [@mahdiashtian](https://github.com/mahdiashtian) | 01 - Introducing Asyncio  |
-| | [@Farzadnaghavi](https://github.com/Farzadnaghavi) | 02 - The Truth About Threads |
-| | [@sadult](https://github.com/sadult) | 03 - Asyncio Walk-Through |
-| | [@FatemeFouladkar](https://github.com/FatemeFouladkar) | 04 Asyncio Libraries You Aren’t Using |
+| | | 01 - Introducing Asyncio  |
+| |  | 02 - The Truth About Threads |
+| || 03 - Asyncio Walk-Through |
+| ۱ فروردین ۱۴۰۲ | [@FatemeFouladkar](https://github.com/FatemeFouladkar) | 04 Asyncio Libraries You Aren’t Using |
 | ۱ اسفند ۱۴۰۱| [@mehrawbmh](https://github.com/mehrawbmh) | 05 Concluding Thoughts |
 | ۱۵ اسفند ۱۴۰۱ | [@mmdbalkhi](https://github.com/mmdbalkhi) | Appendix A-A Short History of Async Support in Python |
 | | [@mmdbalkhi](https://github.com/mmdbalkhi) | Appendix B-Supplementary Material |
