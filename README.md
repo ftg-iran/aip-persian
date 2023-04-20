@@ -16,7 +16,7 @@
 
 | تاریخ اتمام ترجمه      | مترجم | سرفصل     |
 | :---:        |    :----:   |          :---: |
-| | | 01 - Introducing Asyncio  |
+| ۳۱ فروردین ۱۴۰۱ | [@Rahimz](https://github.com/Rahimz) | 01 - Introducing Asyncio  |
 | |  | 02 - The Truth About Threads |
 | || 03 - Asyncio Walk-Through |
 | ۱ فروردین ۱۴۰۲ | [@FatemeFouladkar](https://github.com/FatemeFouladkar) | 04 Asyncio Libraries You Aren’t Using |
