@@ -31,3 +31,16 @@
 </p>
 <p style='text-align: justify'>با این حال، اولین نکته در مورد سادگی درک شده بسیار مهم است: threading در پایتون <i>احساس می کند</i> فوق العاده ساده است، و اگر قبلاً توسط باگ های غیرممکن در شرایط مسابقه نسوخته اید، threading یک مدل همزمانی بسیار جذاب ارائه می دهد. حتی اگر در گذشته سوخته باشید، threading یک گزینه قانع کننده باقی می ماند زیرا احتمالاً یاد گرفته اید (از راه سخت) چگونه کد خود را ساده و ایمن نگه دارید.
 </p>
+<p style='text-align: justify'>من فضایی برای ورود به برنامه نویسی رشته ای ایمن در اینجا ندارم، اما به طور کلی، بهترین روش برای استفاده از thread ها استفاده از کلاس <code>ThreadPoolExecutor</code> از ماژول <code>concurrent.futures</code> است. ، تمام داده های مورد نیاز را از طریق روش <code>()submit</code> ارسال می کند. مثال 1-2 یک مثال اساسی را نشان می دهد.
+</p>
+
+*مثال 1-2. بهترین شیوه های threading*
+```python
+from concurrent.futures import ThreadPoolExecutor as Executor
+
+def worker(data):
+    # <process the data>
+
+with Executor(max_workers=10) as exe:
+    future = exe.submit(worker, data)
+```
