@@ -44,3 +44,6 @@ def worker(data):
 with Executor(max_workers=10) as exe:
     future = exe.submit(worker, data)
 ```
+
+<p style='text-align: justify'> <code>ThreadPoolExecutor</code> یک رابط بسیار ساده برای اجرای توابع در یک رشته ارائه می دهد - و بهترین قسمت این است که در صورت نیاز، می توانید مجموعه رشته ها را با استفاده از <code>ProcessPoolExecutor</code> به سادگی به مجموعه ای از فرآیندهای فرعی تبدیل کنید. این مشابه رابط <code>ThreadPoolExecutor</code>، به این معنی که کد شما به مقدار کمی توسط تغییرات تحت تاثیر قرار می گیرد. رابط اجرا کننده همچنین در <code>asyncio</code> استفاده می شود و در بخش بعدی توضیح داده شده است.
+</p>
