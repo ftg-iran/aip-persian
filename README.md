@@ -19,7 +19,7 @@
 | ۳۱ فروردین ۱۴۰۲ | [@Rahimz](https://github.com/Rahimz) | 01 - Introducing Asyncio  |
 | |  | 02 - The Truth About Threads |
 | ۳۰ اردیبهشت ۱۴۰۲ |[p-ndr@](https://github.com/p-ndr)| 03 - Asyncio Walk-Through 1L-683L |
-| | | 03 - Asyncio Walk-Through 683L-2142L |
+| ۲۸ تیر ۱۴۰۲ | [@FatemeFouladkar](https://github.com/FatemeFouladkar) | 03 - Asyncio Walk-Through 683L-2142L |
 | ۱ فروردین ۱۴۰۲ | [@FatemeFouladkar](https://github.com/FatemeFouladkar) | 04 Asyncio Libraries You Aren’t Using |
 | ۱ اسفند ۱۴۰۱| [@mehrawbmh](https://github.com/mehrawbmh) | 05 Concluding Thoughts |
 | ۱۵ اسفند ۱۴۰۱ | [@mmdbalkhi](https://github.com/mmdbalkhi) | Appendix A-A Short History of Async Support in Python |
