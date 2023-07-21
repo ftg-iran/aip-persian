@@ -46,12 +46,12 @@
 مثال ۱-۲. بهترین تمرین برای thread  زدن است
 
 
-‍``` python
-    from concurrent.futures import ThreadPoolExecutor as Executor
+```python
+from concurrent.futures import ThreadPoolExecutor as Executor
 
-    def worker(data):
-        # <process the data>
+def worker(data):
+    # <process the data>
 
-    with Executor(max_workers=10) as exe:
-        future = exe.submit(worker, data)
+with Executor(max_workers=10) as exe:
+    future = exe.submit(worker, data)
 ```
